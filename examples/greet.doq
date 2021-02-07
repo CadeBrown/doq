@@ -1,0 +1,57 @@
+;; greet.doq - Example documentation for a 'greet' utility (included in kscript)
+;;
+;; ';;' mean comments until the end of line
+;;
+;; @author: Cade Brown <cade@kscript.org>
+
+
+;; General rules:
+;;   * '$(...)' is a variable get or set
+;;   * '@<name>' is a function/macro/control flow invocation
+
+;; Main index page
+@node greet, {
+    
+This is the documentation for the 'greet' project (available here: {@url https://github.com/ChemicalDevelopment/kscript/blob/main/examples/greet.ks})
+
+This also shows how to use the 'doq' utility to generate multiple output formats from the same input format. Some of this is generated with macros
+
+
+@node Usage, {
+
+Using the 'greet' utility is easy. You can run with the `-h` or `--help` options to print a help menu:
+
+```shell
+$ greet.ks -h
+usage: greet [opts] names...
+
+    names                       List of names to greet
+
+opts:
+    -h,--help                   Prints this help/usage message and then exits
+    --version                   Prints the version information and then exits
+    -g,--greeting[=str]         The greeting message to use (default: hello,)
+
+authors:
+    Cade Brown <cade@kscript.org>
+version: 0.1.0
+```
+
+}
+
+@node Terms, {
+
+Here are some terms... Let's see how to use the description list:
+
+@dlist
+    A, The first letter of the alphabet,
+    B, The second letter of the alphabet,
+    ..., We're skipping a lot here,
+    U, A later letter,
+    W, A letter than seemingly contains other characters {@dlist Nested 1, This is a nested item, Nested 2, This is another!},
+}
+
+}
+
+
+

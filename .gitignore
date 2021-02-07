@@ -1,0 +1,10 @@
+
+doq
+
+*.o
+*.a
+*.lib
+*.so
+*.dll
+
+out*

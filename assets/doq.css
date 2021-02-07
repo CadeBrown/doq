@@ -1,0 +1,150 @@
+/* doq.css - CSS for generated 'doq' projects
+ *
+ * @author: Cade Brown <cade@kscript.org>
+ */
+
+/** General CSS **/
+
+html {
+}
+
+body {
+    /* Default text font */
+    font-family: Verdana, sans-serif;
+
+    line-height: 1.2;
+}
+
+dt {
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 135%;
+    margin-bottom: 0.25em;
+}
+dd {
+    margin-bottom: 1.25em;
+}
+code {
+    line-height: 1.4;
+    font-size: 110%;
+    background-color: #f0f0f0;
+    padding: 0.1em;
+}
+pre {
+    font-size: 104%;
+    background-color: #f0f0f0;
+    padding: 0.4em;
+}
+
+
+/** Specific Layouts **/
+
+.main {
+    /* Should be equal to the width of the side navigation */
+    margin-left: 300px;
+    padding: 0 0.6em;
+    width: auto;
+}
+
+.sidenav {
+    /* Sidebar width */
+    width: 300px;
+
+    /* Sidebar background color */
+    background-color: #dadada;
+
+    font-size: 16px;
+
+    height: 100%;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    overflow-x: hidden;
+}
+.sidenav > div {
+    margin: 1.0em;
+}
+.sidenav a {
+    /* Link color in sidebar */
+    color: #0d6dd2;
+
+    /* Disable underline */
+    text-decoration: none;
+}
+.sidenav li {
+    /* Make list indentation less */
+    margin-left: -20px;
+}
+
+/** Code Highlighting **/
+
+.hljs {
+    background-color: transparent !important;
+    display: block;
+    overflow-x: auto;
+    background: white;
+    color: #272727;
+    padding: 0.5em;
+}
+
+.hljs-emphasis {
+    font-style: italic;
+}
+.hljs-strong {
+    font-weight: bold;
+}
+
+.hljs-comment,
+.hljs-quote {
+    color: #407e7e;
+}
+
+.hljs-meta,
+.hljs-link {
+    color: #c82829;
+}
+
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+    color: #c82829;
+}
+
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-type,
+.hljs-params {
+    color: #0048ce;
+}
+
+.hljs-attribute {
+    color: #eab700;
+}
+
+.hljs-number,
+.hljs-literal {
+    color: #1f85ce;
+}
+
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+    color: #3e9616;
+}
+
+.hljs-title,
+.hljs-section {
+    color: #108e97;
+}
+
+.hljs-keyword,
+.hljs-selector-tag {
+    color: #7d1cec;
+}

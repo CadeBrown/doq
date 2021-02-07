@@ -1,0 +1,34 @@
+;; basic.doq - Simple example of doq in action
+;;
+;; ';;' mean comments until the end of line
+;;
+;; @author: Cade Brown <cade@kscript.org>
+
+
+;; General rules:
+;;   * '$(...)' is a variable get or set
+;;   * '@<name>' is a function/macro/control flow invocation
+
+$(title=basic-example)
+$(description=A great introduction to doq)
+
+$(authors=Cade Brown <cade@kscript.org>)
+
+$(date=@today)
+
+
+;; Main index page
+@node /, {
+
+This is the documentation for the $(title) project. We hope it can show you how to effectively use doq!
+
+@list {
+    @item Thing A
+    @item Thing B
+    @item Thing C
+}
+
+
+}
+
+
