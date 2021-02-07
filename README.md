@@ -5,10 +5,9 @@ Doq is a documentation system meant to target multiple output formats (markdown,
 
 ## Usage
 
-To build a specific documentation, run `doq [input] [output]`, where `input` is a `.doq` file, and `output` depends on the format.
+To build a specific documentation, run `doq [input] [output]`, where `input` is a `.doq` file, and `output` is the directory to write to
 
-
-
+For example, to build the `kscript` documentation, run: `doq examples/kscript.doq out`. Then, `out/index.html` should be the documentation (it may create other required assets in that folder as well)
 
 ## Building
 

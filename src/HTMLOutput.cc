@@ -210,6 +210,7 @@ void HTMLOutput::dump_item(Item* item) {
 
 void HTMLOutput::dump_node(Node* node) {
     vector<int> idxs = node->get_posi();
+    doparastk.push_back(true);
 
     /* Output header */
     string id = plain(node->name);
@@ -258,6 +259,9 @@ void HTMLOutput::dump_node(Node* node) {
     for (size_t i = 0; i < node->sub.size(); ++i) {
         dump_node(node->sub[i]);
     }
+
+    doparastk.pop_back();
+
 }
 
 void HTMLOutput::sidebar(Node* node) {
@@ -286,10 +290,13 @@ void HTMLOutput::init() {
     // Copy existing assets
     copyfile(dest + "/doq.css", assetpath + "/doq.css");
     copyfile(dest + "/hljs-ks.js", assetpath + "/hljs-ks.js");
+    copyfile(dest + "/doq.js", assetpath + "/doq.js");
 
     // Open the main file
     fp.open(dest + "/index.html", ios::out);
-    doparastk.push_back(true);
+
+    doparastk.push_back(false);
+
 
 }
 
@@ -302,7 +309,9 @@ void HTMLOutput::exec() {
     dumpl("    <meta charset='utf-8'>");
     dumpl("    <meta http-equiv='X-UA-Compatible' content='IE=edge'>");
     dumpl("    <meta name='viewport' content='width=device-width,initial-scale=1.0'>");
-    dumpl("    <title>kscript docs | v0.0.1</title>");
+    dump("    <title>");
+    dump_esc(proj->get("project")->flatten());
+    dumpl("</title>");
     dumpl("");
     dumpl("<!-- MathJax -->");
     dumpl("    <script>");
@@ -321,6 +330,7 @@ void HTMLOutput::exec() {
     dumpl("");
     dumpl("<!-- doq specific assets -->");
     dumpl("    <link rel='stylesheet' href='doq.css'>");
+    dumpl("    <script src='./doq.js'></script>");
     dumpl("    <script src='./hljs-ks.js'></script>");
     dumpl("");
 
@@ -328,18 +338,25 @@ void HTMLOutput::exec() {
     dumpl("<body>");
 
     /* Generate sidebar */
-    dumpl("<div class='sidenav'><div>");
+    dumpl("<div id='sidenav' class='sidenav'><div>");
     dump("<ul>");
     for (size_t i = 0; i < proj->root->sub.size(); ++i) {
         sidebar(proj->root->sub[i]);
     }
     dump("</ul>");
+
+    dumpl("<div class='sidenav-bottom'>");
+    dump_item(proj->get("copyright"));
+    dumpl("</div>");
+
     dumpl("</div></div>");
 
     /* Main content */
     dumpl("<div class='main'><div>");
     dump_node(proj->root);
     dumpl("</div></div>");
+
+    dumpl("<svg class='sidenav-button' onclick='doq_togglesidenav()' viewBox='0 0 100 80' width='40' height='40'><rect width='100' height='20'></rect><rect y='30' width='100' height='20'></rect><rect y='60' width='100' height='20'></rect></svg>");
 
     /* HTML end */
     dumpl("</body>");

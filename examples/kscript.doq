@@ -2,7 +2,9 @@
 ;;
 ;; @author: Cade Brown <cade@kscript.org>
 
-@set project, kscript manual | v0.0.1
+@set project, kscript manual v0.0.1
+@set copyright, {2020 ChemicalDevelopment}
+
 
 @node kscript manual, {}, {
 
@@ -28,8 +30,6 @@ kscript is a dynamic programming language with expressive syntax, cross-platform
     }
 
     }
-
-
 
 
 @node Philosophy, {Design decisions, and high-level overview of how everything works}, {

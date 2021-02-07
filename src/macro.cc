@@ -16,7 +16,6 @@ Item* get(Project* proj, const vector<Item*>& args) {
     return proj->get(args[0]->flatten());
 }
 
-
 Item* set(Project* proj, const vector<Item*>& args) {
     if (args.size() < 1) {
         MACRO_ERROR("'@set' requires at least 1 argument");

@@ -12,8 +12,8 @@ int main(int argc, char** argv) {
         throw runtime_error("Usage: doq [file] [output]");
     }
 
+    /* Create project form input file */
     string src = readall(argv[1]);
-
     Project* proj = new Project(src);
 
     /* Output */
@@ -25,6 +25,4 @@ int main(int argc, char** argv) {
 
     delete proj;
     delete out;
-
-
 }

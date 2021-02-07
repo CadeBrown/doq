@@ -23,6 +23,7 @@ dt {
 }
 dd {
     margin-bottom: 1.25em;
+    margin-left: 2.0em;
 }
 code {
     line-height: 1.4;
@@ -50,10 +51,8 @@ pre {
     /* Sidebar width */
     width: 300px;
 
-    /* Sidebar background color */
+    /* Sidebar background color (see also in mobile view) */
     background-color: #dadada;
-
-    font-size: 16px;
 
     height: 100%;
     position: fixed;
@@ -62,12 +61,24 @@ pre {
     left: 0;
     overflow-x: hidden;
 }
+
+.sidenav-button {
+    position: fixed;
+    display: none;
+
+    bottom: 10px;
+    right: 10px;
+}
+
+
 .sidenav > div {
     margin: 1.0em;
+    height: auto;
 }
 .sidenav a {
     /* Link color in sidebar */
     color: #0d6dd2;
+    font-size: 16px;
 
     /* Disable underline */
     text-decoration: none;
@@ -76,6 +87,42 @@ pre {
     /* Make list indentation less */
     margin-left: -20px;
 }
+
+/* Bottom section of sidebar */
+.sidenav-bottom {
+    vertical-align: bottom;
+
+    font-size: 14px;
+    
+    position: absolute;
+    bottom: 0.6em;
+
+}
+
+
+
+/* Mobile */
+@media screen and (max-width: 768px) {
+    .main {
+        margin-left: 0;
+    }
+    .sidenav {
+        width: 80%;
+        background-color: #dadadaf3;
+        display: none;
+        font-size: 20px;
+        margin: auto;
+    }
+    .sidenav-button {
+        display: block;
+    }
+    dd {
+        margin-left: 1.0em;
+    }
+
+}
+
+
 
 /** Code Highlighting **/
 
