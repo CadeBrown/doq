@@ -609,6 +609,43 @@ Examples:
 
 }
 
+
+@node Lambda Definition, {}, {
+    
+}
+
+@node Function Definition, {Function definition syntax}, {
+
+This is the syntax for constructing $func objects with the `func` keyword. 
+
+A $dict is a mutable collection, so once the literal is created, it may be mutated further.
+
+Dict literals are created by surrounding the key-value pairs of the dict with `{` and `}`, with `:` seperating the key and value, and with `,` in between each element. Optionally, an additional `,` may be added after all of them. Items within a dict literal may span across lines.
+
+The empty dictionary can be created via either `{}` or `{,}`.
+
+Dict literals also support unpacking, however the syntax is not finalized yet. This is incomplete.
+
+Dict literals also support comprehension, which can be specified with the `for` and optionally an `if` keyword. You can use: `k: v for b in c` (adds the key-value entry `k` and `v` for each element `b` in an iterable `c`) or `k: v for b in c if d` (adds the key-value entry `k` and `v` for each element `b` in an iterable `c`, only if the expression `d` is truthy). You can think of this as an inline {@ref For Statement, `for` loop}.
+
+
+Since $dict objects only store unique members (i.e. keys which differ in hash and value), adding duplicate elements will result in a shorter $dict with fewer elements than intiailizers (see below in examples).
+
+
+Examples:
+
+```ks
+>>> {}
+{}
+>>> {'a': 1, 'b': 2, 'c': 3}
+{'a': 1, 'b': 2, 'c': 3}
+>>> >>> {'a': 1, 'b': 2, 'c': 3, 'a': 4} # Duplicate elements update the value, but do not add entries
+{'a': 4, 'b': 2, 'c': 3}
+```
+
+}
+
+
 }
 
 @node Statements, {Syntax elements which do not yield a value}, {
