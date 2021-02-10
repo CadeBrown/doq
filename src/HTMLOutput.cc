@@ -43,6 +43,13 @@ void HTMLOutput::dump_esc(const string& x) {
             }
         }
     }
+    if (x.size() == 0) {
+        if (para && needspara) {
+            dump("<p>");
+            needspara = false;
+            inpara = true;
+        }
+    }
 }
 
 string HTMLOutput::plain(const string& x) {
@@ -64,12 +71,22 @@ void HTMLOutput::dump_item(Item* item) {
     switch (item->kind)
     {
     case Item::Kind::MONO:
+        dump_esc("");
         dump("<code>");
         dump(item->sval);
         for (size_t i = 0; i < item->sub.size(); ++i) {
             dump_item(item->sub[i]);
         }
         dump("</code>");
+        break;
+    case Item::Kind::MONOI:
+        dump_esc("");
+        dump("<span class='monoi'>");
+        dump(item->sval);
+        for (size_t i = 0; i < item->sub.size(); ++i) {
+            dump_item(item->sub[i]);
+        }
+        dump("</span>");
         break;
     case Item::Kind::BOLD:
         dump("<b>");
@@ -186,6 +203,11 @@ void HTMLOutput::dump_item(Item* item) {
                 }
 
                 dump_item(item->sub[i]);
+
+                dump("<a href='#");
+                dump(id);
+                dump("' class='link-div'><svg viewBox='0 0 16 16' aria-hidden='true'><use xlink:href='#svg-link'></use></svg></a>");
+
                 dump("</dt>");
                 doparastk.pop_back();
 
@@ -236,6 +258,12 @@ void HTMLOutput::dump_node(Node* node) {
     dump(" ");
     dump(node->name);
 
+    /* Add a generated link button */
+
+    dump("<a href='#");
+    dump(id);
+    dump("' class='link-div'><svg viewBox='0 0 16 16' aria-hidden='true'><use xlink:href='#svg-link'></use></svg></a>");
+
     /* Close tag */
     dump("</h");
     dump(idxs.size());
@@ -251,6 +279,7 @@ void HTMLOutput::dump_node(Node* node) {
         dump_item(toc);
         delete toc;
     }
+
 
     /* Dump the content of this node */
     dump_item(node->val);
@@ -336,6 +365,19 @@ void HTMLOutput::exec() {
 
     dumpl("</head>");
     dumpl("<body>");
+    dumpl("");
+    dumpl("<!-- SVG -->");
+    dumpl("<svg xmlns='http://www.w3.org/2000/svg' style='display: none;'>");
+    dumpl("    <!-- Link SVG -->");
+    dumpl("    <symbol id='svg-link' viewBox='0 0 24 24'>");
+    dumpl("    <title>Link</title>");
+    dumpl("    <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-link'>");
+    dumpl("        <path d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'></path>");
+    dumpl("        <path d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'></path>");
+    dumpl("    </svg>");
+    dumpl("    </symbol>");
+    dumpl("</svg>");
+    dumpl("");
 
     /* Generate sidebar */
     dumpl("<div id='sidenav' class='sidenav'><div>");

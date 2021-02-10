@@ -103,6 +103,7 @@ Item* Project::parse_text(vector<Token>& toks, int& toki, bool stopsep) {
                 ln->sub.push_back(nn);
                 cur = nn;
 
+
                 while (!DONE && TOK.kind == Token::Kind::COM) {
                     EAT();
                     SKIP_SN();
@@ -178,9 +179,12 @@ Item* Project::parse_text(vector<Token>& toks, int& toki, bool stopsep) {
             EAT();
 
             /* Create code */
-            Item* v = new Item(Item::Kind::MONO, { new Item(code) });
+            if (code.size() > 0) {
+                Item* v = new Item(Item::Kind::MONO, { new Item(code) });
+                res->sub.push_back(v);
 
-            res->sub.push_back(v);
+            }
+
         } else {
             /* Literal token */
             Token tok = EAT();
@@ -256,6 +260,7 @@ Project::Project(const string& src_) {
 
     macros["list"] = new Macro(macro::list);
     macros["dict"] = new Macro(macro::dict);
+    macros["cdict"] = new Macro(macro::cdict);
     macros["math"] = new Macro(macro::math);
     macros["mathblock"] = new Macro(macro::mathblock);
 

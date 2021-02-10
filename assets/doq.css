@@ -38,6 +38,19 @@ pre {
 }
 
 
+/* Inline mono */
+.monoi {
+    font-family: monospace;
+    line-height: 1.4;
+    font-size: 110%;
+    padding: 0.1em;
+
+}
+
+a .monoi {
+    text-decoration: none;
+}
+
 /** Specific Layouts **/
 
 .main {
@@ -77,12 +90,14 @@ pre {
 }
 .sidenav a {
     /* Link color in sidebar */
-    color: #0d6dd2;
+    color: #0f52aa;
     font-size: 16px;
 
     /* Disable underline */
     text-decoration: none;
 }
+
+
 .sidenav li {
     /* Make list indentation less */
     margin-left: -20px;
@@ -99,6 +114,46 @@ pre {
 
 }
 
+/* SVG link icon */
+.link-div {
+    width: 20px;
+    margin: 0 6px;
+    display: inline-block;
+    vertical-align: middle;
+
+
+    /* Link color on clickable */
+    color: #0f52aa;
+    font-size: 16px;
+
+    /* Disable underline */
+    text-decoration: none;
+
+    visibility: hidden;
+}
+
+h1:hover > .link-div {
+    visibility: visible;
+}
+
+h2:hover > .link-div {
+    visibility: visible;
+}
+
+h3:hover > .link-div {
+    visibility: visible;
+}
+
+h4:hover > .link-div {
+    visibility: visible;
+}
+
+h5:hover > .link-div {
+    visibility: visible;
+}
+dt:hover > .link-div {
+    visibility: visible;
+}
 
 
 /* Mobile */

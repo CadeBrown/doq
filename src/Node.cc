@@ -79,6 +79,15 @@ Item* Node::toc(bool recurse) {
         res->sub.push_back(v);
     }
 
+    for (size_t i = 0; i < contains.size() && !recurse; ++i) {
+        if (contains[i].size() > 0) {
+            Item* v = new Item("");
+            //v->sub.push_back(new Item(Item::Kind::REF, sub[i]->name, { new Item(to_string(i + 1) + ". "), new Item(sub[i]->name) }));
+            v->sub.push_back(new Item(Item::Kind::REF, contains[i], { new Item(Item::Kind::MONOI, contains[i]) }));
+            res->sub.push_back(v);
+        }
+    }
+
     return res;
 }
 

@@ -39,7 +39,6 @@ Item* set(Project* proj, const vector<Item*>& args) {
 }
 
 
-
 Item* today(Project* proj, const vector<Item*>& args) {
     time_t rawtime;
     struct tm * timeinfo;
@@ -98,6 +97,14 @@ Item* mono(Project* proj, const vector<Item*>& args) {
     return res;
 }
 
+Item* monoi(Project* proj, const vector<Item*>& args) {
+    Item* res = new Item(Item::Kind::MONOI);
+    for (size_t i = 0; i < args.size(); ++i) {
+        res->sub.push_back(args[i]->copy());
+    }
+    return res;
+}
+
 Item* bold(Project* proj, const vector<Item*>& args) {
     Item* res = new Item(Item::Kind::BOLD);
     for (size_t i = 0; i < args.size(); ++i) {
@@ -142,6 +149,33 @@ Item* list(Project* proj, const vector<Item*>& args) {
 Item* dict(Project* proj, const vector<Item*>& args) {
     Item* res = new Item(Item::Kind::DICT);
     for (size_t i = 0; i < args.size(); ++i) {
+        if (i % 2 == 0) {
+            string flat = args[i]->flatten();
+            if (flat.size() == 0) {
+                i++;
+                continue;
+            }
+        }
+
+        res->sub.push_back(args[i]->copy());
+    }
+    return res;
+}
+
+Item* cdict(Project* proj, const vector<Item*>& args) {
+    Item* res = new Item(Item::Kind::DICT);
+    for (size_t i = 0; i < args.size(); ++i) {
+        if (i % 2 == 0) {
+            string flat = args[i]->flatten();
+            if (flat.size() == 0) {
+                i++;
+                continue;
+            }
+            if (proj->cur) {
+                /* Add reference */
+                proj->cur->contains.push_back(flat);
+            }
+        }
         res->sub.push_back(args[i]->copy());
     }
     return res;

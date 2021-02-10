@@ -72,7 +72,15 @@ The above was just an example, but it shows how specially named attributes allow
     {__len()}, {Used for computing the length of a container, which is typically the number of elements. Should return an $int},
 
 }
+
+
+
+@node Templates, {Feature on specific types}, {
+
 }
+
+}
+
 
 
 @node Syntax, {Language specification and grammar rules}, {
@@ -80,9 +88,9 @@ The above was just an example, but it shows how specially named attributes allow
 This section describes the syntax of the ksript language. It explains the actual formal specs of what is and what is not valid kscript code.
 
 
-@node EBNF-like, {Formal specification}, {
+@node EBNF, {Formal specification}, {
 
-{@url https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form, EBNF} is a notation to formalize computer grammars. In this page, the grammar of the kscript language is described using an EBNF-like syntax.
+{@url https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form, EBNF} is a notation to formalize computer grammars. In this page, the grammar of the kscript language is described using an EBNF-like syntax:
 
 
 ```
@@ -270,12 +278,19 @@ FLOAT   : ? floating point literal ?
 
 }
 
+@node Expressions, {Syntax elements yielding a result}, {
+
+In kscript, many syntax elements are {@ref Expressions, expressions}, which means that they will result in a value after being evaluated. You can always assign the result of an expression to a variable, element index, attribute, or any other destination where you may store in any object. They can be used within other expressions (albeit, sometimes requiring `()` due to order-of-operations).
+
+In contrast to most languages, {@ref Function Definitions} and {@ref Type Definitions} are expressions (in most languages, they are statements and do not yield a value). You can, of course, use them like a statement (i.e. not embedded in another expression), but you can also return them, or assign them locally.
+
 
 @node Integer Literals, {Whole number literal syntax}, {
 
 This is the syntax for constructing literal integers (of type $int). You can specify the base-10 digits within a kscript program, and it will be interpreted as an integer. You can also use a prefix for other notations -- see the table below for a list of valid ones:
 
 {@dict
+    {0d}, {{@url https://en.wikipedia.org/wiki/Decimal, Decimal} notation involves the prefix `0d` or `0d` or no prefix followed by a sequence of base-10 digits, which are one of: `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`},
     {0b}, {{@url https://en.wikipedia.org/wiki/Binary_number, Binary} notation involves the prefix `0b` or `0B` followed by a sequence of base-2 digits (called bits), which are either `0` or `1`},
     {0o}, {{@url https://en.wikipedia.org/wiki/Octal, Octal} notation involves the prefix `0o` or `0O` (that's "zero" "oh", as in the number and then letter) followed by a sequence of base-8 digits, which are one of: `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`. A common use of this notation is file permission bits, see: $os.mkdir, $os.stat},
     {0x}, {{@url https://en.wikipedia.org/wiki/Hexadecimal, Hexadecimal} notation involves the prefix `0x` or `0X` followed by a sequence of base-16 digits, which are are one of: `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `a`/`A`, `b`/`B`, `c`/`C`, `d`/`D`, `e`/`E`, `f`/`F`},
@@ -315,6 +330,9 @@ Examples:
 This is the syntax for constructing literal floating point numbers (of type $float). You can specify the base-10 digits within a kscript program, including a `.` for the whole number/fractional seperator (which differentiates $float literals from {@ref Integer Literals}), and it will be interpreted as a real number, represented as accurately as the machine precision can (see $float.EPS). Additionally, an exponent is allowed (see: {@url https://en.wikipedia.org/wiki/Scientific_notation, scientific notation}) with the `e` or `E` characters. You can also use a prefix for other notations -- see the table below for a list of valid ones:
 
 {@dict
+    {0d}, {{@url https://en.wikipedia.org/wiki/Decimal, Decimal} notation involves the prefix `0d` or `0d` or no prefix followed by a sequence of base-10 digits, which are one of: `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`
+    },
+
     {0b}, {{@url https://en.wikipedia.org/wiki/Binary_number, Binary} notation involves the prefix `0b` or `0B` followed by a sequence of base-2 digits (called bits), which are either `0` or `1`. Must include a `.` as a seperator
     
     Instead of using `e` or `E` for the base-10 power, you use `p` or `P` for a base-2 power.
@@ -432,7 +450,7 @@ Here's a list of escape sequences:
     {\xXX}, {Single byte, where `XX` are the 2 hexadecimal digits of the codepoint (padded with leading zeros)
 Examples:
 
-```
+```ks
 >>> '\x61'
 'a'
 ```
@@ -440,7 +458,7 @@ Examples:
     {\uXXXX}, {Unicode character, where `XXXX` are the 4 hexadecimal digits of the codepoint (padded with leading zeros)
 Examples:
 
-```
+```ks
 >>> '\u0061'
 'a'
 ```
@@ -448,7 +466,7 @@ Examples:
     {\UXXXXXXXX}, {Unicode character, where `XXXXXXXX` are the 8 hexadecimal digits of the codepoint (padded with leading zeros)
 Examples:
 
-```
+```ks
 >>> '\U00000061'
 'a'
 ```
@@ -456,7 +474,7 @@ Examples:
     {\N[XX...X]}, {Unicode character, where `XX...X` is the {@url https://en.wikipedia.org/wiki/List_of_Unicode_characters, name} of the Unicode character
 Examples:
 
-```
+```ks
 >>> '\N[LATIN SMALL LETTER A]'
 'a'
 ```
@@ -465,6 +483,557 @@ Examples:
 
 }
 
+}
+
+@node List Literals, {List literal syntax}, {
+
+This is the syntax for constructing literal $list objects. A $list is a mutable collection, so once the literal is created, it may be mutated further.
+
+List literals are created by surrounding the elements of the list with `[` and `]`, with `,` in between each element. Optionally, an additional `,` may be added after all of them. Items within a list literal may span across lines.
+
+An empty list can be created with either `[]` or `[,]` (they are equivalent).
+
+List literals also support unpacking, which can be specified via a `*` before an element in the literal. This instructs kscript to treat that element as an iterable, and instead of adding it, it adds each object within that element to the list.
+
+List literals also support comprehension, which can be specified with the `for` and optionally an `if` keyword. You can use: `a for b in c` (adds the expression `a` for each element `b` in an iterable `c`) or `a for b in c if d` (adds the expression `a` for each element `b` in an iterable `c`, only if the expression `d` is truthy). You can think of this as an inline {@ref For Statement, `for` loop}.
+
+
+Examples:
+
+```ks
+>>> []
+[]
+>>> [,]
+[]
+>>> [1, 2, 3]
+[1, 2, 3]
+>>> ["Any", "Type", "CanBeStored"]
+['Any', 'Type', 'CanBeStored']
+>>> [*"abcd"]
+['a', 'b', 'c', 'd']
+```
+
+}
+
+@node Tuple Literals, {Tuple literal syntax}, {
+
+This is the syntax for constructing literal $tuple objects. A $tuple is a immutable collection, so once the literal is created, it may not be mutated further.
+
+Tuple literals are created by surrounding the elements of the tuple with `(` and `)`, with `,` in between each element. Optionally, an additional `,` may be added after all of them. Items within a tuple literal may span across lines. Tuples with one element must end with a comma (i.e. `(a,)`)
+
+The empty tuple can be created via either `()` or `(,)`
+
+
+Tuple literals also support unpacking, which can be specified via a `*` before an element in the literal. This instructs kscript to treat that element as an iterable, and instead of adding it, it adds each object within that element to the tuple.
+
+Tuple literals also support comprehension, which can be specified with the `for` and optionally an `if` keyword. You can use: `a for b in c` (adds the expression `a` for each element `b` in an iterable `c`) or `a for b in c if d` (adds the expression `a` for each element `b` in an iterable `c`, only if the expression `d` is truthy). You can think of this as an inline {@ref For Statement, `for` loop}.
+
+
+Examples:
+
+```ks
+>>> ()
+()
+>>> (,)
+()
+>>> (1, 2, 3)
+(1, 2, 3)
+>>> ("Any", "Type", "CanBeStored")
+('Any', 'Type', 'CanBeStored')
+>>> (*"abcd")
+('a', 'b', 'c', 'd')
+```
+
+}
+
+@node Set Literals, {Set literal syntax}, {
+
+This is the syntax for constructing literal $set objects. A $set is a mutable collection, so once the literal is created, it may be mutated further.
+
+Set literals are created by surrounding the elements of the set with `{` and `}`, with `,` in between each element. Optionally, an additional `,` may be added after all of them. Items within a set literal may span across lines.
+
+Due to a conflicts with {@ref Dict Literals}, the empty set must be created via calling the $set type: `set()`
+
+Set literals also support unpacking, which can be specified via a `*` before an element in the literal. This instructs kscript to treat that element as an iterable, and instead of adding it, it adds each object within that element to the set.
+
+Set literals also support comprehension, which can be specified with the `for` and optionally an `if` keyword. You can use: `a for b in c` (adds the expression `a` for each element `b` in an iterable `c`) or `a for b in c if d` (adds the expression `a` for each element `b` in an iterable `c`, only if the expression `d` is truthy). You can think of this as an inline {@ref For Statement, `for` loop}.
+
+
+Since $set objects only store unique members (i.e. members which differ in hash and value), adding duplicate elements will result in a shorter $set with fewer elements than intiailizers (see below in examples).
+
+
+Examples:
+
+```ks
+>>> set()
+set()
+>>> {1, 2, 3}
+{1, 2, 3}
+>>> {"Any", "Type", "CanBeStored"}
+{'Any', 'Type', 'CanBeStored'}
+>>> {*"abcd"}
+{'a', 'b', 'c', 'd'}
+>>> {3, 2, 1, 2, 3}    # Duplicate elements are not added
+{3, 2, 1}
+```
+
+}
+
+
+@node Dict Literals, {Dict literal syntax}, {
+
+This is the syntax for constructing literal $dict objects. A $dict is a mutable collection, so once the literal is created, it may be mutated further.
+
+Dict literals are created by surrounding the key-value pairs of the dict with `{` and `}`, with `:` seperating the key and value, and with `,` in between each element. Optionally, an additional `,` may be added after all of them. Items within a dict literal may span across lines.
+
+The empty dictionary can be created via either `{}` or `{,}`.
+
+Dict literals also support unpacking, however the syntax is not finalized yet. This is incomplete.
+
+Dict literals also support comprehension, which can be specified with the `for` and optionally an `if` keyword. You can use: `k: v for b in c` (adds the key-value entry `k` and `v` for each element `b` in an iterable `c`) or `k: v for b in c if d` (adds the key-value entry `k` and `v` for each element `b` in an iterable `c`, only if the expression `d` is truthy). You can think of this as an inline {@ref For Statement, `for` loop}.
+
+
+Since $dict objects only store unique members (i.e. keys which differ in hash and value), adding duplicate elements will result in a shorter $dict with fewer elements than intiailizers (see below in examples).
+
+
+Examples:
+
+```ks
+>>> {}
+{}
+>>> {'a': 1, 'b': 2, 'c': 3}
+{'a': 1, 'b': 2, 'c': 3}
+>>> >>> {'a': 1, 'b': 2, 'c': 3, 'a': 4} # Duplicate elements update the value, but do not add entries
+{'a': 4, 'b': 2, 'c': 3}
+```
+
+}
+
+}
+
+@node Statements, {Syntax elements which do not yield a value}, {
+
+These elements do not yield a value, and are typically used for control flow.
+
+In contrast to most languages, {@ref Function Definitions} and {@ref Type Definitions} are expressions (in most languages, they are statements and do not yield a value). You can, of course, use them like a statement (i.e. not embedded in another expression), but you can also return them, or assign them locally.
+
+@node Expression Statement, {Executes an expression}, {
+
+The expression statement is an {@ref Expression, expression}, which has a line break after it, or, equivalently, a semicolon (`;`). You can write code without using semicolons (`;`), and it is recommended to not use them. For example, calling `foo()` and `bar()` can be done in a few ways:
+
+
+```ks
+# This is the best, it is clear and readable
+foo()
+bar()
+
+# Don't do this, the ';' are unnecessary
+foo();
+bar();
+
+# Don't do this, it's less readable
+foo(); bar()
+
+```
+
+However, if there is some circumstance that makes it better to have multiple on the same line, you may have expression statements ended with `;`. This is sometimes useful when creating one liners running with the interpreter, but in production code or code you are sharing with anyone else, you should just put them on seperate lines.
+
+}
+
+
+@node Assert Statement, {Validating an assertion}, {
+
+The `assert` statement is an example of {@ref https://en.wikipedia.org/wiki/Assertion_(software_development), assertion syntax} for the kscrip language. It instructs the program to evaluate a conditional expression, check whether it is truthy (see $bool), and if it is not truthy, throws an $AssertError up the call stack.
+
+This is done to do "sanity checks" on things which should be a given value, and is encouraged for only internal code checking (i.e. don't check user input with `assert`, use `if` and then {@ref Throw Statements, `throw`} an $Exception yourself). Here is the syntax:
+
+```ks
+# Evaluates `x` and asserts that it is true
+assert x
+```
+
+}
+
+
+
+@node Cont Statement, {Continue through a loop}, {
+
+The `cont` statement prematurely terminates the innermost loop (which may be a {@ref While Statement, `while` statement}, or {@ref For Statement, `for` statement}) and retries the next iteration.
+
+As a result, it must be placed within a `while` or `for` statement. For example:
+
+```ks
+# infinite loop
+while true {
+    # Stops executing now, and continues the loop
+    cont
+    # This code never runs
+    x = 3
+}
+```
+
+See also the {@ref Break Statement}
+
+}
+
+
+
+@node Break Statement, {Break a loop}, {
+
+The `break` statement prematurely terminates the innermost loop (which may be a {@ref While Statement, `while` statement}, or {@ref For Statement, `for` statement}) and then stops executing the loop
+
+As a result, it must be placed within a `while` or `for` statement. For example:
+
+```ks
+# looks like an infinite loop, but is not since the `break` statement will terminate it
+while true {
+    # Stops executing now, and exits the loop
+    break
+    # This code never runs
+    x = 3
+}
+```
+
+See also the {@ref Cont Statement}
+
+}
+
+
+@node Ret Statement, {Returning a value from a function}, {
+
+The `ret` statement is an example of {@url https://en.wikipedia.org/wiki/Return_statement, return syntax} for the kscript language. It instructs the program to return a value (or `none`) from the current function, and stop executing in that function.
+
+For example:
+
+```ks
+# Returns the value `a` and stops executing the current function
+ret a
+
+# Equivalent to `ret none`
+ret
+```
+
+}
+
+
+
+@node Throw Statement, {Throwing an exception up the call stack}, {
+
+The `throw` statement is an example of {@url https://en.wikipedia.org/wiki/Exception_handling_syntax, exception handling syntax} for the kscript language. It instructs the program to throw a value up the call stack, which searches through the current functions executing in the {@ref os.thread, thread}, until it finds a {@ref Try Statement, `try` statement}. If it does find a `try` statement, then it is handled to rules according to that syntax. If there were no `try` statements that catch the exception, then the program is halted and the exception is printed (this is called an "unhandled exception").
+
+
+For example:
+
+```ks
+# Throws the value `a` up the call stack
+throw a
+```
+
+To see how it can work, look at this small example:
+
+```ks
+# Innocent enough looking function...
+func foo(x) {
+    # Some error condition
+    if x == 0 {
+        throw Exception("'x' should never be 0")
+    }
+
+    # Do something else
+    ...
+}
+
+
+# Fine
+foo(1)
+# Fine
+foo(2)
+# Uh-oh, this crashes and prints: Exception: 'x' should never be 0
+# (and, at this point, the program stops)
+foo(0)
+
+# Now, wrap in a `try` statement
+try {
+    foo(0)
+} catch as err {
+    # This works, and it prints what it caught ("I got: Exception")
+    # It doesn't stop the program
+    print ("I got:", type(err))
+}
+```
+
+}
+
+@node If Statement, {Conditional code execution}, {
+
+The `if` statement is an example of a {@url https://en.wikipedia.org/wiki/Conditional_(computer_programming), conditional statement}, which evaluates a condition, and then based on the result (specifically, whether it was truthy or falsey), either runs another {@ref Statements, statement}, or does not. An `if` statement has the following syntax:
+
+```ks
+if a {
+    b
+}
+```
+
+Where `a` is an {@ref Expressions, expression}, and treated as the conditional. If `a` is truthy (see $bool), then `b` is executed, which can be zero-or-more {@ref Statements, statements}. After the closing `}`, there may be additional clauses. 
+
+Specifically, there is the `elif` clause:
+
+```ks
+if a {
+    b
+} elif c {
+    d
+} elif e {
+    f
+}
+```
+
+`c` is only executed if `a` was not truthy. If `c` was truthy, then `d` is executed. Similarly, if `c` was not truthy, then `e` is evaluated, and if it is truthy then `f` is executed. You can stack as many `elif` clauses as you want.
+
+There is also the `else` clause, which is given after the `if` and `elif` parts (it must be the last). The syntax is:
+
+
+```ks
+if a {
+    b
+} elif c {
+    d
+} elif e {
+    f
+} else {
+    g
+}
+```
+
+`g` is only executed if `a`, `c`, and `e` were all falsey.
+
+
+Sometimes, it is advantageous or more consise to have an `if` statement without using the `{` and `}` surrounding the body. If the body only has a single {@ref Statements, statement}, then you can use this syntax instead:
+
+```ks
+if a, b
+```
+
+Which is equivalent to:
+
+```ks
+if a {
+    b
+}
+```
+
+As long as `b` is only a single statement.
+
+It is always recommended to keep an inline `if` on a single line. For example, do not do the following:
+
+```ks
+# THIS IS BAD. DO NOT DO
+if a,
+    b
+```
+
+This is confusing, because the indentation suggests there is another block, and if you had written:
+
+```ks
+# THIS IS BAD. DO NOT DO
+if a,
+    b
+    c
+```
+
+Then a reader may think that `b` and `c` are both executed if `a` is true, but `c` is actually executed regardless!
+
+}
+
+@node While Statement, {Conditional loop execution}, {
+
+The `while` statement is an example of a {@url https://en.wikipedia.org/wiki/Conditional_(computer_programming), conditional loop}, which evaluates a condition, and then based on the result (specifically, whether it was truthy or falsey), either runs another {@ref Statements, statement} and then retries the condition, or exits the loop. An `while` statement has the following syntax:
+
+```ks
+while a {
+    b
+}
+```
+
+Which first evaluates `a`. If `a` is truthy (see $bool), then the body, `b`, is executed (which is zero-or-more {@ref Statements, statements}), and then this process is repeated, re-evaluating `a` and then re-executing `b` if it is truthy. If `a` is falsey, then the loop is exited.
+
+Similar to an {@ref If Statements, `if` statement}, `while` statements allow for additional `elif` clauses and a final `else` clause. The `elif` and `else` clauses are only checked and executed if the conditional, `a`, was falsey on the first time through the loop. So, if `a` was truthy, and then falsey, then none of the `elif` or `else` clauses are checked.
+
+Let's take an example:
+
+```ks
+while a {
+    b
+} elif c {
+    d
+} else {
+    e
+}
+```
+
+When encountering the `while`, `a` is first evaluated. While it is truthy, `b` is executed, and `a` is rechecked, and `b` is executed again, until `a` is falsey. If `a` was never truthy (which means `b` is not executed at all), then `c` is evaluated. If `c` is truthy, then `d` is executed. Otherwise, if `c` is falsey, `e` is executed.
+
+
+Sometimes, it is advantageous or more consise to have an `while` statement without using the `{` and `}` surrounding the body. If the body only has a single {@ref Statements, statement}, then you can use this syntax instead:
+
+```ks
+while a, b
+```
+
+Which is equivalent to:
+
+```ks
+while a {
+    b
+}
+```
+
+As long as `b` is only a single statement.
+
+It is always recommended to keep an inline `while` on a single line. For example, do not do the following:
+
+```ks
+# THIS IS BAD. DO NOT DO
+while a,
+    b
+```
+
+This is confusing, because the indentation suggests there is another block, and if you had written:
+
+```ks
+# THIS IS BAD. DO NOT DO
+while a,
+    b
+    c
+```
+
+Then a reader may think that `b` and `c` are both executed if `a` is true, but `c` is actually executed regardless!
+
+}
+
+@node For Statement, {Iterable loop execution}, {
+
+The `for` statement is an {@url https://en.wikipedia.org/wiki/For_loop#Iterator-based_for-loops, iterator-based `for` loop}, which is sometimes called a `foreach` loop. It iterates over elements of an {@ref iter, iterable}. Specifically, you can write a `for` loop like so:
+
+```ks
+for a in b {
+    c
+}
+```
+
+Which first evaluates `b`, and treats it as an iterable (see {@ref iter()}). It is iterated over via the {@ref next()} function, until the iterable runs out. For each element, it is assigned to `a` (which must be an assignable {@ref Expressions, expression}), and then the body, `c` (which may be zero-or-more statements), is ran. 
+
+Similar to an {@ref If Statements, `if` statement}, `for` statements allow for additional `elif` clauses and a final `else` clause. The `elif` and `else` clauses are only checked and executed if the iterable, `b`, was empty on the first time through the loop. So, if `b` had any elements, and then runs out, then none of the `elif` or `else` clauses are checked.
+
+Let's take an example:
+
+```ks
+for a in b {
+    c
+} elif d {
+    e
+} else {
+    f
+}
+```
+
+When encountering the `for`, `b` is first evaluated and turned into an iterable via the {@ref iter()} function. While there is another element (by calling the {@ref next()} function), it is assigned to `a` (which should be an assignable expression). Then, the code block `c` is executed (which is expected to be zero-or-more {@ref Statements, statements}). If it was empty (i.e. `c` was never ran, and `a` was never assigned to), then it goes through the `elif` clauses. In this case, it evaluates `d` and checks whether it was truthy. If it was, then `e` is executed. Otherwise, `f` is executed.
+
+Sometimes, it is advantageous or more consise to have an `for` statement without using the `{` and `}` surrounding the body. If the body only has a single {@ref Statements, statement}, then you can use this syntax instead:
+
+```ks
+for a in b, c
+```
+
+Which is equivalent to:
+
+```ks
+for a in b {
+    c
+}
+```
+
+As long as `b` is only a single statement.
+
+It is always recommended to keep an inline `for` on a single line. For example, do not do the following:
+
+```ks
+# THIS IS BAD. DO NOT DO
+for a in b,
+    c
+```
+
+This is confusing, because the indentation suggests there is another block, and if you had written:
+
+```ks
+# THIS IS BAD. DO NOT DO
+for a in b,
+    c
+    d
+```
+
+Then a reader may think that `b` and `c` are both executed if `a` is true, but `c` is actually executed regardless!
+
+}
+
+@node Try Statement, {Exception handling construct}, {
+
+The `try` statement (also called `try/catch` statement) is the {@ref https://en.wikipedia.org/wiki/Exception_handling_syntax, exception handling syntax} for kscript. It allows exceptions thrown with the {@ref Throw Statement, `throw` statement} while executing the body of the `try` statement to be "caught", and then handled appropriately.
+
+
+There are a few variations of the `try` statement. Specifically, the `catch` clauses may differ. All `try` statements begin with the format:
+
+```ks
+try {
+    a
+}
+```
+
+Here, `a` is the "body" of the `try` statement. Then, like `elif` and `else` clauses in the {@ref If Statement, `if` statement}, there may be any number of `catch` clauses, and then, optionally, a `finally` clause as well. Also, like `elif` and `else` clauses in an `if` statement, only one body of the `catch` clause can be ran. It checks the `catch` clauses sequentially, and the first type specifier that is a match (or, if the type specifier was ommitted, any exception matches) it runs the corresponding block, and does not check subsequent `catch` clauses
+
+Here are the variations of the `catch` clause:
+
+
+```ks
+try {
+    a
+} catch NameError {
+    # This is only selected if the exception thrown was a subtype of `NameError`
+} catch NameError as err {
+    # This is only ran if the exception thrown was a subtype of `NameError`, and captures
+    #   the thrown object as the local name `err`
+    print (err)
+} catch (NameError, SizeError) as err {
+    # This is only selected if the exception thrown was a subtype of `NameError` or `SizeError`, and
+    #   captures the thrown object as the local name `err`
+    # You can include however many elements in the tuple as you want, this will match an exception
+    #   which is a subtype of any of the elements within the tuple
+} catch {
+    # This is selected for any thrown exception
+} catch as err {
+    # This is selected for any thrown exception, and captures the thrown object as the local name `err`
+}
+```
+
+And, after all the `catch` clauses, there is also, optionally, a `finally` clause which is allowed:
+
+```ks
+try {
+    a
+} catch {
+    ...
+} finally {
+    b
+}
+```
+
+`b` is executed whether an exception was thrown, or handled, or not. It is always ran after `a`, and after a catch block (if one is ran at all). These are normally used to close resources which need to be closed whether the exception occurs or not. And, it allows the developer to put shared code here instead of in each `catch` clause.
+
+Just to explain further:
+
+{@list {If `a` is executed and no exception occurs, it then runs `b`}, {If `a` is executed an exception occurs, and is handled in a `catch` clause, it then runs `b`}, {If `a` is executed and an exception occurs, and is not handled in a `catch` clause, it then runs `b`, and then re-throws the exception, going up the call stack finding the next `try` statement, or causing the program to halt and print the unhandled exception}}
+
+}
 
 }
 
@@ -484,7 +1053,7 @@ Since kscript is a {@url https://en.wikipedia.org/wiki/Object-oriented_programmi
 
 @node Types, Builtin types, {
 
-@dict
+@cdict
     {object()}, {The most generic type, which is the common type that all other types are derived from. The code `isinst(x, object)` always returns true, no matter what object `x` refers to.
     
     Objects can be created via the constructor, `object()`, which returns a blank objects that has writeable and readable attributes},
@@ -505,7 +1074,7 @@ Since kscript is a {@url https://en.wikipedia.org/wiki/Object-oriented_programmi
 
     Operations between numbers use type coercion, with the following rules (unless otherwise stated):
 
-    @list {
+    {@list
         {If all operands are integers, then an integer result is returned},
         {If all operands are either integers or real floating point numbers, then a real floating point result is returned},
         {If none of the above are applicable, then at least one operand must be a complex floating point number, and a complex floating point result is returned}
@@ -644,7 +1213,7 @@ true
 
 @node Functions, Builtin functions, {
 
-@dict
+@cdict
     {print(*args)}, {Prints all of `args` to the standard output ($os.stdout), by converting each one to a string, and adding a space between each argument. After all elements are printed, a newline is also printed.
     
     For finer grained control of output format see the $printf function},
@@ -695,14 +1264,14 @@ true
 }
 
 
-@node Errors, Builtin error types, {
+@node Exceptions, Builtin error types, {
 
-Exception/Errors can be thrown via the `throw` statement and caught via the `try/catch` construct. Anything thrown must be an instance (either directly or indirectly) of the $Exception type.
+Exception/Errors can be thrown via the {@ref Throw Statement, `throw` statement} and caught via the {@ref Try Statement, `try` statement}. Anything thrown must be an instance (either directly or indirectly) of the $Exception type.
 
-Exceptions are more general than errors; Errors indicate that something has gone wrong, whereas $Exception s can be used to disrupt control flow (see $OutOfIterException). Therefore, in `try/catch` sometimes it is recommended to only catch `Error` objects, and allow exceptions to pass upwards.
+Exceptions are more general than errors; errors indicate that something has gone wrong, whereas exceptions can be used to disrupt control flow (see $OutOfIterException). Therefore, in `try/catch` sometimes it is recommended to only catch `Error` objects, and allow exceptions to pass upwards.
 
 
-@dict
+@cdict
     {Exception(what='')}, {This is the base type of all other exceptions. Only objects which are a subtype of $Exception may be thrown via the `throw` statement (and thus caught via the `try/catch` construct). Unlike most patterns in kscript (see {@ref Patterns}), exception throwing requires the type of the object being thrown to be a derived type of this, instead of simply having magic attributes.
     
     @dict
@@ -888,6 +1457,22 @@ In <thread 'main'>
 ```
     },
 
+
+    {AssertError(what='')}, {Errors of this type are thrown when an {@ref Assert Statement, `assert` statement} has a falsey conditional
+
+Examples:
+
+```ks
+>>> assert false
+AssertError: Assertion failed: 'false'
+Call Stack:
+  #0: In '<inter-0>' (line 1, col 1):
+assert false
+^~~~~~~~~~~~
+In <thread 'main'>
+```
+    },
+
     {MathError(what='')}, {Errors of this type are thrown when a mathematical operation is given invalid or out of range operands
 
 Examples:
@@ -939,7 +1524,7 @@ ord('a', 'b')
 
 Errors of this type are thrown when an error is reported by the OS, for example by setting `errno` in C
 
-This is a [templatable](/more/templates) type, which means there are subtypes based on the type of error expressed. The specific templated types are sometimes platform-specific, and we are currently working to standardize what we can. 
+This is a {@ref Templates, templated} type, which means there are subtypes based on the type of error expressed. The specific templated types are sometimes platform-specific, and we are currently working to standardize what we can. 
 
 Examples:
 
@@ -974,7 +1559,7 @@ A good example of this is the $os module, which uses the C standard library to p
 This module, `util`, implements commonly used datastructures and algorithms that aren't in the {@ref Builtins, builtins}. While they are commonly used, they are not used frequently enough to use the global namespace and thus restrict developers from using those names in their own code. So, you can think of the `util` module as "builtins 2: electric boogaloo".
 
 
-@dict
+@cdict
     {util.Queue(objs=none)}, {This type represents a {@url https://en.wikipedia.org/wiki/Queue_(abstract_data_type), queue} which can handle arbitrary objects. It can be created via the constructor, which accepts `objs` (default: none), which is expected to be an iterable containing the elements to initialize the queue from.
     
     The main purpose of a queue over the builtin $list type is that certain operations are much more efficient for a queue. For example, popping from the left and right is {@math O(1)}, whereas with a list they are {@math O(N)} and {@math O(1)} respectively (where {@math N} is the length of the collection). This has large consequences if you are doing the operation over and over for example -- using a queue will reduce runtime drastically.
@@ -1055,7 +1640,7 @@ This module, `os`, allows code to interact with the operating system (OS) that t
 
 Due to differences between operating systems that kscript can run on, some functionality may be different, or even missing on some platforms. We attempt to document known cases of functions behaving differently or when something is not supported. Typically, an error is thrown whenever something is not available on a particular platform.
 
-@dict
+@cdict
 
     os.argv, {List of commandline arguments passed to the program. Typically, `os.argv[0]` is the file that was ran, and `os.argv[1:]` are the arguments given afterward},
     os.stdin, {A readable $io.FileIO object representing the input to the program},
@@ -1231,8 +1816,6 @@ none
 ```
         },
 
-        {}, {},
-    
     },
 
 }
@@ -1240,7 +1823,7 @@ none
 
 This module, `time`, allows code to programmatically determine the current time, convert date-times to human readable formats, create timestamps, and reason about multiple times. 
 
-@dict
+@cdict
     {time.ISO8601}, {This is a string which is the format that can be passed to $time.format and $time.parse to format and parse {@url https://en.wikipedia.org/wiki/ISO_8601, ISO8601} format. This format is the preferred format for exchanges of dates and times.},
 
     {time.time()}, {Returns the number of seconds since the Epoch as a floating point number.
@@ -1350,6 +1933,45 @@ Here are some recommended ways to handle it:
 >>> if abs(m.sin(m.pi) - 0) < 1e-6 {}    # Better, uses a decent tolerance (1e-6 is pretty good)
 >>> if m.isclose(m.sin(m.pi), 0) {}      # Best, use the m.isclose() function
 ```
+
+@cdict
+    {m.pi}, {
+The value of {@url https://en.wikipedia.org/wiki/Pi, {@math \pi}}, as a $float
+
+```ks
+>>> m.pi
+3.141592653589793
+```
+
+},
+    {m.tau}, {
+The value of {@url https://en.wikipedia.org/wiki/Turn_(angle)#Tau_proposals, {@math \tau}}, as a $float
+
+```ks
+>>> m.tau
+6.283185307179586
+```
+
+},
+    {m.e}, {
+The value of {@url https://en.wikipedia.org/wiki/E_(mathematical_constant), {@math e}}, as a $float
+
+```ks
+>>> m.e
+2.718281828459045
+```
+
+},
+    {m.mascheroni}, {
+The value of {@url https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant, {@math \gamma}}, as a $float
+
+```ks
+>>> m.mascheroni
+0.577215664901533
+```
+
+},
+
 
 
 }

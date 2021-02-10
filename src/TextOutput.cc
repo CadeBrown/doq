@@ -64,13 +64,13 @@ void TextOutput::dump_item(Item* item) {
         break;
 
     case Item::Kind::CODE:
-        dump("```");
+        dump("\n```");
         dump(item->sval);
         dump("\n");
         for (size_t i = 0; i < item->sub.size(); ++i) {
             dump_item(item->sub[i]);
         }
-        dump("```");
+        dump("```\n");
         break;
     case Item::Kind::MATH:
         dump("$");
@@ -144,13 +144,13 @@ void TextOutput::dump_node(Node* node) {
     /* If we are not the root node */
     if (idxs.size() > 0) {
         /* Output header */
-        for (size_t i = 0; i < idxs.size(); ++i) {
+        for (size_t i = 1; i < idxs.size(); ++i) {
             dump("#");
         }
         dump(" ");
 
         /* Output a section ID */
-        for (size_t i = 0; i < idxs.size(); ++i) {
+        for (size_t i = 1; i < idxs.size(); ++i) {
             dump(idxs[i] + 1);
             dump(".");
         }
@@ -173,7 +173,8 @@ void TextOutput::dump_node(Node* node) {
 
 
 void TextOutput::init() {
-    fp.open(dest, ios::out);
+    mkdir(dest.c_str(), 0777);
+    fp.open(dest + "/index.md", ios::out);
 }
 
 void TextOutput::exec() {

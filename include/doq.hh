@@ -160,6 +160,9 @@ struct Item {
         /* Monospace section
          */
         MONO,
+        /* Monospace inline section
+         */
+        MONOI,
         /* Bold section
          */
         BOLD,
@@ -249,8 +252,14 @@ struct Node {
     /* Parent of this node, or NULL if there is none */
     Node* par;
 
+    /* Depth of 'dict' commands */
+    int dictdep = 0;
+
     /* Array of children nodes */
     vector<Node*> sub;
+
+    /* reference IDs that the node contains */
+    vector<string> contains;
 
     Node(const string& name_, const string& desc_, Item* val_, Node* par_=NULL, const vector<Node*>& sub_={}) : name(name_), desc(desc_), val(val_), par(par_), sub(sub_) {}
 
@@ -308,7 +317,10 @@ struct Project {
 
     /* Root index page of the project */
     Node* root;
-    
+
+    /* Current node being traversed */
+    Node* cur;
+
 
     /* Construct from file source */
     Project(const string& src_);
@@ -338,11 +350,6 @@ struct Project {
      * Parses from 'toks', and stops on seperators if 'stopsep' is given
      */
     Item* parse_text(vector<Token>& toks, int& toki, bool stopsep=false);
-
-    /* (INTERNAL)
-     * Current node that the parser is at
-     */
-    Node* cur;
 
 
 };
@@ -554,6 +561,12 @@ Item* set(Project* proj, const vector<Item*>& args);
  */
 Item* mono(Project* proj, const vector<Item*>& args);
 
+/* @monoi <content>...
+ * 
+ * Creates a mono(inline) section
+ */
+Item* monoi(Project* proj, const vector<Item*>& args);
+
 /* @bold <content>...
  * 
  * Creates a bold section
@@ -604,6 +617,12 @@ Item* list(Project* proj, const vector<Item*>& args);
  * Creates a dict primitive
  */
 Item* dict(Project* proj, const vector<Item*>& args);
+
+/* @cdict <key, val>...
+ *
+ * Creates a dict primitive, and adds content to the current page
+ */
+Item* cdict(Project* proj, const vector<Item*>& args);
 
 
 /* @math <content>...
