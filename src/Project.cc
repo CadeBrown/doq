@@ -35,9 +35,10 @@ namespace doq {
 
 
 Item* Project::parse_text(vector<Token>& toks, int& toki, bool stopsep) {
+
     Item* res = new Item(Item::Kind::JOIN);
-    while (!DONE && !(TOK.kind == Token::Kind::RBRC || (stopsep && (TOK.kind == Token::Kind::COM || TOK.kind == Token::Kind::NEWLINE)))) {
-        if (TOK.kind == Token::Kind::LBRC) {
+    while (!DONE && !((TOK.kind == Token::Kind::RBRC && (!ismath || mathlbrc <= 0)) || (stopsep && (TOK.kind == Token::Kind::COM || TOK.kind == Token::Kind::NEWLINE)))) {
+        if (TOK.kind == Token::Kind::LBRC && (!ismath)) {
             /* Block of input with '{}' */
             EAT();
 
@@ -115,6 +116,10 @@ Item* Project::parse_text(vector<Token>& toks, int& toki, bool stopsep) {
                 /* Don't add to output, since it is a page */
 
             } else {
+                if (cmd == "math" || cmd == "mathblock") {
+                    mathlbrc = 0;
+                    ismath = true;
+                }
                 /* Parse arguments */
                 vector<Item*> args;
                 
@@ -127,6 +132,11 @@ Item* Project::parse_text(vector<Token>& toks, int& toki, bool stopsep) {
                     args.push_back(parse_text(toks, toki, true));
                 }
 
+                if (cmd == "math" || cmd == "mathblock") {
+                    ismath = false;
+                    mathlbrc = 0;
+                }
+
                 /* Add temporary to output */
                 Item* v = call(cmd, args);
 
@@ -136,6 +146,7 @@ Item* Project::parse_text(vector<Token>& toks, int& toki, bool stopsep) {
                 for (size_t i = 0; i < args.size(); ++i) {
                 //    delete args[i];
                 }
+
             }
 
         } else if (TOK.kind == Token::Kind::BBBQUOTE) {
@@ -188,6 +199,13 @@ Item* Project::parse_text(vector<Token>& toks, int& toki, bool stopsep) {
         } else {
             /* Literal token */
             Token tok = EAT();
+
+            if (tok.kind == Token::Kind::LBRC) {
+                mathlbrc++;
+            } else if (tok.kind == Token::Kind::RBRC) {
+                mathlbrc--;
+            }
+
             res->sub.push_back(new Item(tok.get(src)));
             if (tok.kind == Token::Kind::NEWLINE) {
                 while (!DONE && TOK.kind == Token::Kind::NEWLINE) {
@@ -239,6 +257,7 @@ void Project::set(const string& key, Item* val) {
 /* Construct from file source */
 Project::Project(const string& src_) {
     src = src_;
+    ismath = false;
 
     vars["project"] = new Item("ProjectName");
 

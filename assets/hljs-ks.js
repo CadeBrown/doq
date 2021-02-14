@@ -117,9 +117,17 @@ const BUILTINS = [
 ]
 
 /* Interpreter prompts */
-const PROMPT = {
+const PROMPT = [
+{
     className: 'meta', begin: /^(>>>|\.\.\.) /
+},
+{
+    className: 'meta', begin: /^<(\w+)/
+},
+{
+    className: 'meta', begin: />$/
 }
+]
 
 /* Numeric helpers */
 const _EXP_E = '([eE][+-]?[0-9]+)';
@@ -190,13 +198,14 @@ const STRING = {
             hljs.HASH_COMMENT_MODE,
             {
                 variants: [
-                {className: 'function', beginKeywords: 'func'},
-                {className: 'class', beginKeywords: 'type'}
+                    { className: 'function', beginKeywords: 'func' },
+                    { className: 'class',    beginKeywords: 'type' }
                 ],
+                
                 end: /{/,
                 illegal: /[${;\n,]/,
                 contains: [
-                hljs.UNDERSCORE_TITLE_MODE,
+                    hljs.UNDERSCORE_TITLE_MODE,
                 ]
             },
         ],

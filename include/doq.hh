@@ -321,6 +321,12 @@ struct Project {
     /* Current node being traversed */
     Node* cur;
 
+    /* Whether math parsing rules should apply */
+    bool ismath;
+
+    /* Number of left brackets */
+    int mathlbrc;
+
 
     /* Construct from file source */
     Project(const string& src_);
