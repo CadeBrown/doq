@@ -2,13 +2,13 @@
 ;;
 ;; @author: Cade Brown <cade@kscript.org>
 
-@set project, kscript manual v0.0.1
+@set project, kscript docs v0.0.1
 @set copyright, {2020 ChemicalDevelopment}
 
 
-@node kscript manual, {}, {
+@node kscript docs, {}, {
 
-Welcome to the kscript manual, available online at {@url https://manual.kscript.org, manual.kscript.org}. This document was compiled on {@today}
+Welcome to the kscript docs, available online at {@url https://docs.kscript.org, docs.kscript.org}. This document was compiled on {@today}
 
 kscript is a dynamic programming language with expressive syntax, cross-platform support, and a rich standard library. kscript was designed to be a tool useful in many different circumstances – as a computer calculator, as a task-automation language, GUI development language, numerical programming language, and more.
 
@@ -16,7 +16,7 @@ kscript is a dynamic programming language with expressive syntax, cross-platform
 @dict
     {What is kscript?}, {{@url https://kscript.org, kscript} is a dynamic programming language with expressive syntax, cross platform support, and a rich standard library. Its primary aim is to allow developers to write platform agnostic programs that can run anywhere, and require little or no platform- or os- specific code.
 
-    You're currently reading the manual, which is a formal specification of the language, builtins, standard library, and semantics.
+    You're currently reading the docs, which is a formal specification of the language, builtins, standard library, and semantics.
     },
     {Why is kscript?}, {kscript was designed to be a tool useful in many different circumstances – as a computer calculator, as a task-automation language, GUI development language, numerical programming language, and more. A few languages may come to mind – namely Python, tcl, and so forth.
 
