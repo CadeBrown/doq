@@ -2871,7 +2871,7 @@ However, if there is some circumstance that makes it better to have multiple on 
 
 @node Assert Statement, {Validating an assertion}, {
 
-The `assert` statement is an example of {@ref https://en.wikipedia.org/wiki/Assertion_(software_development), assertion syntax} for the kscrip language. It instructs the program to evaluate a conditional expression, check whether it is truthy (see $bool), and if it is not truthy, throws an $AssertError up the call stack.
+The `assert` statement is an example of {@url https://en.wikipedia.org/wiki/Assertion_(software_development), assertion syntax} for the kscrip language. It instructs the program to evaluate a conditional expression, check whether it is truthy (see $bool), and if it is not truthy, throws an $AssertError up the call stack.
 
 This is done to do "sanity checks" on things which should be a given value, and is encouraged for only internal code checking (i.e. don't check user input with `assert`, use `if` and then {@ref Throw Statements, `throw`} an $Exception yourself). Here is the syntax:
 
