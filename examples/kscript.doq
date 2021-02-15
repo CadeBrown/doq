@@ -37,7 +37,6 @@ kscript is a dynamic programming language with expressive syntax, cross-platform
 This section contains the design philosophy of kscript. kscript is meant to be very close to {@url https://en.wikipedia.org/wiki/Pseudocode, psuedocode}, which makes reading and writing quite easy (for humans).
 
 
-
 @node Octalogue, {Design goals and rules of thumb}, {
 
 These are the pillars of kscript, which the kscript standard library and all other kscript code should try to adhere to.
@@ -168,9 +167,88 @@ The above was just an example, but it shows how specially named attributes allow
 
 }
 
+@node Operator Overloading, {Feature allowing custom types to define operator semantics}, {
+
+There are a number of {@ref Operators, operators} in kscript that can be used on builtin types and types in the standard library. However, you can also use them with custom types, which is covered in this section. Defining semantics for operators is called {@url https://en.wikipedia.org/wiki/Operator_overloading, operator overloading}.
+
+
+Operator overloading in kscript is done via {@ref Magic Attributes, magic attributes}. Specifically, there are a few different cases:
+
+{@list
+    {For unary operators, such as `+x`, the magic attribute (in this case, `__pos` for `+`) is searched on `type(x)`. So, `type(x).__pos(x)` is attmpted. If no such attribute existed, an $Error is thrown},
+    {For unary operators, such as `x+y`, the magic attribute (in this case, `__add` for `+`) is searched on `type(x)` and `type(y)`. So, `type(x).__add(x, y)` is attmpted. If no such attribute existed, or the result was `undefined`, then `type(y).__add(x, y)` is attmpted. If no such attribute existed, or the result was `undefined`, then an $Error is thrown}
+
+}
+
+The magic attributes for various operators are listed below
+
+Unary operators:
+
+{@list
+    {`+`: $__pos},
+    {`-`: $__neg},
+    {`~`: $__sqig}
+}
+
+Binary operators:
+
+{@list
+    {`+`: $__add},
+    {`-`: $__sub},
+    {`*`: $__mul},
+    {`@`: $__matmul},
+    {`/`: $__div},
+    {`//`: $__floordiv},
+    {`%`: $__mod},
+    {`**`: $__pow},
+    {`<<`: $__lsh},
+    {`>>`: $__rsh},
+    {`|`: $__binior},
+    {`^`: $__binxor},
+    {`&`: $__binand},
+    {`==`: $__eq},
+    {`!=`: $__ne},
+    {`<`: $__lt},
+    {`<=`: $__le},
+    {`>`: $__gt},
+    {`>=`: $__ge}
+}
+
+Here's a short example showing how to overload the `+` operator:
+
+```ks
+# Example class which wraps a value (.val)
+type Foo {
+    func __init(self, val) {
+        self.val = val
+    }
+
+    # Adds two 'Foo' objects (or any objects with a '.val')
+    func __add(L, R) {
+        # Create a new 'Foo' object with the added values
+        ret Foo(L.val + R.val)
+    }
+}
+
+# Create two objects
+A = Foo(1)
+B = Foo(2)
+
+# Prints '3'
+print ((A + B).val)
+```
+
+}
 
 
 @node Templates, {Feature on specific types}, {
+
+Templates are a way to create subtypes of a given type based on parameters (called "template parameters"). This is done by subscripting an existing type with `[]`. Some examples of templates in the standard library are:
+
+{@list
+    {$OSError, which can be templated on the `errno` value returned by the OS (for example, `OSError[3]`)}
+
+}
 
 }
 
@@ -339,6 +417,27 @@ true
 
     Strings can be added together with the `+` operator, which concatenates their contents. For example, `'abc' + 'def' == 'abcdef'`
 
+
+    {@dict
+        {str.upper(self)}, {Computes an all-upper-case version of `self`},
+        {str.lower(self)}, {Computes an all-lower-case version of `self`},
+        {str.isspace(self)}, {Computes whether all characters in `self` are space characters},
+        {str.isprint(self)}, {Computes whether all characters in `self` are printable characters},
+        {str.isalpha(self)}, {Computes whether all characters in `self` are alphabetical characters},
+        {str.isnum(self)}, {Computes whether all characters in `self` are numeric characters},
+        {str.isalnum(self)}, {Computes whether all characters in `self` are alphanumeric},
+        {str.isident(self)}, {Computes whether `self` is a valid kscript identifier},
+        {str.startswith(self, obj)}, {Computes whether `self` starts with `obj` (which may be a string, or a tuple of strings)},
+        {str.endswith(self, obj)}, {Computes whether `self` ends with `obj` (which may be a string, or a tuple of strings)},
+        {str.join(self, objs)}, {Computes a string with `self` in between every element of `objs` (converted to strings)},
+        {str.split(self, by)}, {Returns a $list of strings created when splitting `self` by `by` (which may be a string of tuple of seperators)},
+
+        {str.index(self, sub, start=none, end=none)}, {Find a substring within `self[self:end]`, or throw an error if it was not found},
+        {str.find(self, sub, start=none, end=none)}, {Find a substring within `self[self:end]`, or return `-1` if it was not found},
+        {str.replace(self, sub, by)}, {Returns a string with instances of `sub` replaced with `by`},
+        {str.trim(self)}, {Trims the beginning and end of `self` of spaces, and returns what is left},
+    }
+
     },
 
 
@@ -347,6 +446,84 @@ true
     You can create a bytestring by calling this type as a function with an argument (default: empty bytestring). For non-$bytes objects, conversion depends on the $__bytes {@ref Magic Attributes, magic attribute}. Commonly, calling `bytes(x)` where `x` is a $str will result in the {@url https://en.wikipedia.org/wiki/UTF-8, UTF-8} bytes of that string.
 
     },
+
+    {regex(expr)}, {This type represents a {@url https://en.wikipedia.org/wiki/Regular_expression, regular expression (regex)}. Objects of this type can be used to search through text, or even tokenize streams (see $gram.Lexer).
+    
+    Although in some languages or libraries, the term "regex" refers to extended regular expressions (containing backreferences, recursive patterns, and so forth), the kscript $regex type is a true regex in that it describes exactly the {@url https://en.wikipedia.org/wiki/Regular_language, regular languages}. Though restrictive, it ensures that the implementation can be fast and efficient, and so that generative code and inspection of regex patterns is viable.
+
+    See {@ref Regex Literal} for creating literals.
+
+    kscript allows you to inspect regular expressions, via the $util.Graph type
+
+
+    {@dict
+        {regex.exact(self, src)}, {Compute a boolean describing whether the string `src` matches the regex `self` exactly},
+        {regex.matches(self, src)}, {Compute a boolean describing whether the string `src` matches the regex `self` anywhere},
+    }
+
+    },
+
+    {list(objs=[])}, {This type represents as {@url https://en.wikipedia.org/wiki/List_(abstract_data_type), list} (sometimes called an array in other languages), are collections of elements that can be mutated (i.e. changed).
+    
+    Lists can be created by either calling the constructor (`list(objs)`), or via {@ref List Literal, list literals}.
+
+    {@dict
+        {list.push(self, *args)}, {Pushes all of `args` to the list},
+        {list.pop(self, num=none)}, {This function behaves differently based on whether `num` is given
+        {@list
+            {If `num` is not given, then a single object is removed from the end and returned},
+            {If `num` is given, then an iterable of length `num` is returned and the last `num` elements are removed from the list}
+        }},
+
+        {list.index(self, obj)}, {Returns the (first) index of `obj` within `self`, throwing an $Error if `obj` was not in `self`},
+        {list.sort(self, cmpfunc=none, keys=none)}, {Sorts the list, in place, according to `cmpfunc` applied to `keys`. If `cmpfunc` is given, it is expected to be of the signature: `cmpfunc(L, R)` giving `L <= R`. And, if `keys` is given it is expected to be an iterable which are used for the corresponding inputs in the list},
+    
+    }
+    },
+
+    {tuple(objs=())}, {This type represents an immutable collection, similar to $list, which is indexed by position.
+    
+    Tuples can be created by either calling the constructor (`tuple(objs)`), or via {@ref Tuple Literal, tuple literals}.
+    
+    },
+
+    {set(objs=none)}, {This type represents a mutable collection of unique (by hash and equality) objects, ordered by first insertion order. This type is similar to $dict, but has no values associated with each key.
+
+    If you try and add an object to a set that already contains an equivalent object, nothing is changed.
+
+    Sets can be created by either calling the constructor (`set(objs)`), or via {@ref Set Literal, set literals}.
+
+    },
+
+    {dict(objs={})}, {This type represents a mutable mapped collection of keys and values, with unique (by hash and equality) keys. It is implemented using a {@url https://en.wikipedia.org/wiki/Hash_table, hash table}, and is sometimes referred to as a hash table, dictionary, key-value store, or associative array.
+
+    This type is similar to the $set type, but each element has an associated value.
+
+    Dictionaries can be created by either calling the constructor (`dict(objs)`), or via {@ref Dict Literal, dict literals}.
+
+    Objects of this type have their contents ordered by first unique key insertion, which is reset when a key is deleted from a dictionary. So, setting the value of a new key means it is the last entry in the dictionary, and setting the value of an already existing key does not change the order of the dictionary.
+
+    You can subscript a dictionary like `x[key]` to retreive the value for a given key (or throw a `KeyError` if `key` is not present in `x`), and you can assign to a dictionary like `x[key] = val`
+
+
+```ks
+>>> x = {"Good": 1, "Neutral": 0, "Bad": -1}
+{'Good': 1, 'Neutral': 0, 'Bad': -1}
+>>> len(x)
+3
+>>> x['Good']
+1
+>>> x['Other']
+KeyError: 'Other'
+Call Stack:
+  #0: In '<inter-5>' (line 1, col 1):
+x['Other']
+^~~~~~~~~~
+In <thread 'main'>
+```
+
+
+    }
 
 }
 
@@ -400,6 +577,183 @@ true
     For formatted output on arbitrary IO objects, see the $io.BaseIO.printf function.
     },
 
+    {ord(chr)}, {Converts a character (`chr`), which should be a length-1 string, into its Unicode codepoint and return it as an integer
+
+Examples:
+
+```ks
+>>> ord('a')
+97
+>>> ord('b')
+98
+```
+
+This function is the inverse of $chr},
+
+    {chr(ord)}, {Converts an ordinal (`ord`), which is an integer, into a character. Assumes `ord` is the integer codepoint in Unicode.
+
+Examples:
+
+```ks
+>>> chr(0x61)
+'a'
+>>> chr(0x62)
+'b'
+```
+
+This function is the inverse of $ord
+
+    },
+
+    {issub(tp, of)}, {Calculates whether `tp` is a subtype (or is the same type) as `of`, which should be either a $type, or a tuple of types.
+
+Examples:
+
+```ks
+>>> issub(int, object)
+true
+>>> issub(int, number)
+true
+>>> issub(number, int)
+false
+```
+
+See also: $isinst
+},
+
+    {isinst(obj, of)}, {Calculates whether `obj` is an instance of `of` or a derived type. `of` can be a `type` or a tuple of types. Equivalent to `issub(type(obj), of)`.
+
+Examples:
+
+```ks
+>>> isinst(1, object)
+true
+>>> isinst(1, number)
+true
+>>> isinst(1, float)
+false
+```
+
+See also: $issub
+},
+
+    {repr(obj)}, {Converts an object (`obj`) into a string representation, which delegates to `type(obj).__repr(obj)` (see $__repr), and must result in a string.
+
+In general, this function returns a string of kscript code which will result in `obj` if executed. For example: `repr(1) == '1'`, `repr('abc') == '\'abc\''`, and `repr([1, 2, 3]) == '[1, 2, 3]'`. Although, this is not always possible. For example, `repr(object()) == '<\'object\' @ 0x564460528DD0>'`. For many types, it is equivalent to converting to a $str, with the notable exception of `str` objects themselves -- which add `'` and escape sequences.
+
+
+Examples:
+
+```ks
+>>> repr(1)
+'1'
+>>> repr("abc")
+'\'abc\''
+>>> repr([1, 2, 3])
+'[1, 2, 3]'
+```},
+    {bin(obj)}, {Return a string beginning with `0b` and containing the base-2 digits of `obj` (which should be an integer)},
+    {oct(obj)}, {Return a string beginning with `0o` and containing the base-8 digits of `obj` (which should be an integer)},
+    {hex(obj)}, {Return a string beginning with `0x` and containing the base-16 digits of `obj` (which should be an integer)},
+
+
+    {abs(obj)}, {Computes the absolute value of an object, which delegates to `type(obj).__abs(obj)` (see $__abs). 
+
+For numeric types, it returns the expected values
+
+For $os.path objects, it returns the {@ref os.path.real, real absolute path}
+
+Examples:
+
+```ks
+>>> abs(0)
+0
+>>> abs(1.0)
+1.0
+>>> abs(-1.0)
+1.0
+>>> abs(1 + 2i)
+2.23606797749979
+```
+
+    },
+
+    {hash(obj)}, {Computes the {@url https://en.wikipedia.org/wiki/Hash_function, hash} of an object, which delegates to `type(obj).__hash(obj)` (see $__hash), and must be an integral value.
+
+Most immutable builtin types (including numeric types, $tuple, $str, and $bytes) provide a hashing function. And by default, new types created hash to their $id. However, mutable collection types (such as $list, $set, and $dict) are not hashable and will throw an error when they are attempted to be hashed.
+
+Examples:
+
+```ks
+>>> hash(1)
+1
+>>> hash("abc")
+193485963
+>>> hash((1, 2, 3))
+4415556888914394581
+>>> hash([1, 2, 3])
+TypeError: 'list' object is not hashable
+Call Stack:
+  #0: In '<expr>' (line 1, col 1):
+hash([1, 2, 3])
+^~~~~~~~~~~~~~~
+  #1: In hash(obj) [cfunc]
+In <thread 'main'>
+>>> hash([1, 2, 3] as tuple) # Must wrap as a tuple
+4415556888914394581
+```
+},
+
+
+    {len(obj)}, {Computes the length of an object, which delegates to `type(obj).__len(obj)` (see $__len), and must be an integral value
+
+For builtin container types ($list, $tuple, $dict, and so on), it returns the number of elements
+
+Examples:
+
+```ks
+>>> len([])
+0
+>>> len([1, 2, 3])
+3
+>>> len("abcd")
+4
+```},
+
+
+    {id(obj)}, {Converts an object (`obj`) into its unique ID, which is an integer that is guaranteed to not be equivalent to any two currently living objects.
+
+Most of the time, this is the memory address of the object},
+
+
+    {open(src, mode='r')}, {Opens a file on disk an returns an $io.FileIO object representing the open connection. Throws an error if `src` could not be opened.
+    
+    If `mode` is given (default: read text), then it should be one of the following:
+
+    {@list
+        {`r`: Read text (the file must exist)},
+        {`rb`: Read bytes (the file must exist)},
+        {`r+`: Read and write text (the file must exist)},
+        {`rb+` or `r+b`: Read and write bytes (the file must exist)},
+        {`w`: Write text (the file is cleared)},
+        {`wb`: Read bytes (the file is cleared)},
+        {`w+`: Read and write text (the file is cleared)},
+        {`wb+` or `w+b`: Read and write bytes (the file is cleared)},
+        {`a`: Read and write text (the file is appended to)},
+        {`ab`: Read bytes (the file is appended to)},
+        {`a+`: Read and write text (the file is appended to)},
+        {`ab+` or `a+b`: Read and write bytes  (the file is appended to))}
+    }
+
+    },
+
+
+    {input(prompt='')}, {Prints an (optional) prompt, and then return the next line of user input},
+    {exit(code=0)}, {Exits the program with an exit code (default: success)},
+    {iter(obj)}, {Converts `obj` into an iterable, via the $__iter attribute. If `type(obj).__next` already exists, `obj` is returned (as it is already an iterable)},
+    {next(obj)}, {Returns the next object in an iterable (which may be created via $iter()). Uses the $__next attribute.
+    
+    If `obj` was not an iterable, it is first converted to an iterable, and then the $__next attribute is searched on the iterable. For example, `next([1, 2, 3])` returns `1`},
 }
 
 
@@ -2433,6 +2787,52 @@ type MyType extends list {
     ...
 }
 ```
+
+}
+
+@node Operators, {Binary and unary operators}, {
+
+
+{@url https://en.wikipedia.org/wiki/Operator_(computer_programming), Operators} are used to represent operations on other expressions (called "operands"). There are a few different kind of operators, which are explained briefly below:
+
+{@list
+    {{@url https://en.wikipedia.org/wiki/Unary_operation, Unary operators} (such as `+x`, `-x`, and so on), which take a 1 operand},
+    {{@url https://en.wikipedia.org/wiki/Binary_operation, Binary operators} (such as `x+y`, `x-y`, and so on), which take 2 operands},
+    {{@url https://en.wikipedia.org/wiki/Ternary_operation, Ternary operators} (such as `x if y else z`), which take 3 operands}
+}
+
+
+Within binary operators, there are also {@url https://en.wikipedia.org/wiki/Operator_associativity, associativity}. For example, `a + b + c` is parsed as `(a + b) + c` (left associativity), but `a = b = c` is parsed as `a = (b = c)` (right associativity). Unless explicitly stated, operators are assumed to be left-associative.
+
+
+Operators in kscript also are divided into {@url https://en.wikipedia.org/wiki/Order_of_operations, precedence} levels. For example, `a + b + c` is parsed as `(a + b) + c`, but `a + b * c` is parsed as `a + (b * c)`.
+
+Here are the operators in order of precedence (lowest first) (you can see the {@ref EBNF, syntax of kscript} to see them as well):
+
+{@dict
+    {=, &=, ^=, |=, <<=, >>=, +=, -=, *=, @@=, /=, //=, %=, **=}, {All right associative assignment operators. The base assignment operator (`=`) assigns the right side to the left side.
+    
+    Other operators take the left and right side, apply the operator before the `=` character, and then assign that to the left side.
+    },
+
+    {if/else}, {The `if/else` operator (the ternary operator) is kind of special -- you write the expression as `a if b else c` (or `a if b`, with `c` defaulting to `none`). It is an inline version of the {@ref If Statement, `if` statement}},
+    {??}, {The `??` operator is the short-circuiting and exception-catching operator, which first evaluates the left-operand, and if it was successful, yields that value and short-circuits (does not evaluate the right-operand). Otherwise, if an $Exception was thrown while executing it, then the right-operand is evaluated and used as the result. These can be chained. For example, `x ?? y ?? z` first evaluated `x`, and if an exception is encoutered, it is caught and then `y` is evaluated. If an exception is also thrown in `y`, then `z` is evaluated. If an exception is thrown in `z`, then it is not caught},
+
+    {||}, {The `||` operator is the short-circuiting inclusive-or operator, which first evaluates its left-operand, and if it is truthy (see $bool), then it is used as the result. Otherwise, the right-operand is evaluated and its result is used},
+    {&&}, {The `&&` operator is the short-circuiting and operator, which first evaluates the left-operand, and if it is truthy (see $bool), then its right-operand is evaluated and use as the result. Otherwise, the left-operand is used as the result},
+
+    {===, ==, !=, >, <=, >, >=, in, !in}, {{@url https://en.wikipedia.org/wiki/Relational_operator, Comparison operators}, which may be chained to create a rich comparison. 
+    
+    The first operator (`===`) is defined as exact equality (see the $id function), and is the same as `id(L) == id(R)`. The other operators use {@ref Magic Attributes, magic attributes} on the left-operand and the right-operand to perform functionality. See {@ref Operator Overloading} for more information.
+
+    For example, `a < b <= c` is equivalent to `a < b && b <= c` except that `b` is only evaluated once. Rich comparisons are short circuiting.
+    
+    },
+
+}
+
+
+
 
 }
 

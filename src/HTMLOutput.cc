@@ -387,9 +387,12 @@ void HTMLOutput::exec() {
     }
     dump("</ul>");
 
+
+    /*
     dumpl("<div class='sidenav-bottom'>");
     dump_item(proj->get("copyright"));
     dumpl("</div>");
+    */
 
     dumpl("</div></div>");
 
