@@ -1047,8 +1047,7 @@ You can count on these modules being available in any kscript distribution, and 
 
 A good example of this is the $os module, which uses the C standard library to perform tasks, but the functions will have different and sometimes better suited names to what they actually do.
 
-
-
+You can access modules by using the {@ref Import Statement, `import` statement}. For example, `import os` will import the `os` module, and allow you to use `os.<funcname>`
 
 @node os: Operating System, Operating System Module, {
 
@@ -1096,6 +1095,8 @@ Due to differences between operating systems that kscript can run on, some funct
     {os.listdir(path)}, {Returns a tuple of `(dirs, files)` representing the directories and files within the directory `path`, respectively. Note that the elements within the lists `dirs` and `files` are string objects, and not $os.path objects. The entries `'.'` and `'..'` are never included in `dirs`
     
     If `path` is not a directory, this function throws an $OSError},
+
+    {os.glob(path)}, {Returns a list of string paths matching `path`, which is a {@url https://en.wikipedia.org/wiki/Glob_(programming), glob}. Essentially, wildcard expands `path` to match anything fitting that pattern.},
 
     {os.stat(path)}, {Queries information about the file or directory `path` on the filesystem. This is a type that can be used as a function to perform such a query
     
@@ -2181,6 +2182,7 @@ STMT    : 'import' NAME N
 EXPR        : E0
 
 (* Precedence rules *)
+
 E0      : E1 '=' E0
         | E1 '&=' E0
         | E1 '^=' E0
@@ -2203,10 +2205,11 @@ E1      : E2 'if' E2 ('else' E1)?
 E2      : E2 '??' E3
         | E3
 
-E3      : E2 '||' E3
-        | E3
+E3      : E3 '||' E4
+        | E4
 
 E4      : E4 '&&' E5
+        | E5
 
 E5      : E5 '===' E6
         | E5 '==' E6
@@ -2218,57 +2221,64 @@ E5      : E5 '===' E6
         | E5 'in' E6
         | E5 '!in' E6
         | E6
+
+E6      : E6 'as' E7
         | E7
 
-E6      : E6 '|' E7
-        | E7
 
-E7      : E7 '^' E8
+E7      : E7 '|' E8
         | E8
 
-E8      : E8 '&' E9
+E8      : E8 '^' E9
         | E9
 
-E9      : E9 '<<' E10
-        | E9 '>>' E10
+E9      : E9 '&' E10
         | E10
 
-E10     : E10 '+' E11
-        | E10 '-' E11
+E10     : E10 '<<' E11
+        | E10 '>>' E11
         | E11
 
-E11     : E11 '*' E12
-        | E11 '@' E12
-        | E11 '/' E12
-        | E11 '//' E12
-        | E11 '%' E12
+E11     : E11 '+' E12
+        | E11 '-' E12
         | E12
 
-E12     : E13 '**' E12
+E12     : E12 '*' E13
+        | E12 '@' E13
+        | E12 '/' E13
+        | E12 '//' E13
+        | E12 '%' E13
         | E13
 
-E13     : '++' E13
-        | '--' E13
-        | '+' E13
-        | '-' E13
-        | '~' E13
-        | '!' E13
-        | '?' E13
+E13     : E14 '**' E13
+        | E14
+
+E14     : '++' E14
+        | '--' E14
+        | '+' E14
+        | '-' E14
+        | '~' E14
+        | '!' E14
+        | '?' E14
         | E15
 
-E14     : E14 '.' NAME
-        | E14 '++'
-        | E14 '--'
-        | E14 '(' (ARG (',' ARG)*)? ','? ')'   (* Function call *)
-        | E14 '[' (ARG (',' ARG)*)? ','? ']'   (* Subscript call *)
-        | TUPLE
-        | LIST
-        | SET
-        | DICT
-        | ATOM
-        | FUNC
-        | TYPE
-        | ENUM
+E15     : ATOM
+        | '(' ')'
+        | '[' ']'
+        | '{' '}'
+        | '(' ELEM (',' ELEM)* ','? ')'
+        | '[' ELEM (',' ELEM)* ','? ']'
+        | '{' ELEM (',' ELEM)* ','? '}'
+        | '{' ELEMKV (',' ELEMKV)* ','? '}'
+        | 'func' NAME? ('(' (PAR (',' PAR)* ','?)? ')')? B    (* Func constructor *)
+        | 'type' NAME? ('extends' EXPR)? B                    (* Type constructor *)
+        | 'enum' NAME? B                                      (* Enum constructor *)
+        | E15 '.' NAME
+        | E15 '++'
+        | E15 '--'
+        | E15 '(' (ARG (',' ARG)*)? ','? ')'
+        | E15 '[' (ARG (',' ARG)*)? ','? ']'
+
 
 (* Atomic element of grammar (expression which is single token) *)
 ATOM    : NAME
@@ -2807,6 +2817,27 @@ Within binary operators, there are also {@url https://en.wikipedia.org/wiki/Oper
 
 Operators in kscript also are divided into {@url https://en.wikipedia.org/wiki/Order_of_operations, precedence} levels. For example, `a + b + c` is parsed as `(a + b) + c`, but `a + b * c` is parsed as `a + (b * c)`.
 
+
+Here is a list of the operators in order of precedence (lowest first):
+
+{@list
+    {`=, &=, ^=, |=, <<=, >>=, +=, -=, *=, @@=, /=, //=, %=, **=`},
+    {`if/else`},
+    {`??`},
+    {`||`},
+    {`&&`},
+    {`===, ==, !=, >, <=, >, >=, in, !in`},
+    {`|`},
+    {`^`},
+    {`&`},
+    {`<<, >>`},
+    {`+, -`},
+    {`*, @@, /, //, %`},
+    {`**`},
+    {`~, !, ++ (pre), -- (pre), + (unary), - (unary)`},
+    {`., ++ (post), -- (post)`}
+}
+
 Here are the operators in order of precedence (lowest first) (you can see the {@ref EBNF, syntax of kscript} to see them as well):
 
 {@dict
@@ -2821,21 +2852,67 @@ Here are the operators in order of precedence (lowest first) (you can see the {@
     {||}, {The `||` operator is the short-circuiting inclusive-or operator, which first evaluates its left-operand, and if it is truthy (see $bool), then it is used as the result. Otherwise, the right-operand is evaluated and its result is used},
     {&&}, {The `&&` operator is the short-circuiting and operator, which first evaluates the left-operand, and if it is truthy (see $bool), then its right-operand is evaluated and use as the result. Otherwise, the left-operand is used as the result},
 
-    {===, ==, !=, >, <=, >, >=, in, !in}, {{@url https://en.wikipedia.org/wiki/Relational_operator, Comparison operators}, which may be chained to create a rich comparison. 
+    {==}, {The comparison operator representing equality (may be chained with other comparison operators to create a rich comparison).
     
-    The first operator (`===`) is defined as exact equality (see the $id function), and is the same as `id(L) == id(R)`. The other operators use {@ref Magic Attributes, magic attributes} on the left-operand and the right-operand to perform functionality. See {@ref Operator Overloading} for more information.
+    May be defined via the $__eq attribute},
+    {!=}, {The comparison operator representing inequality (may be chained with other comparison operators to create a rich comparison).
+    
+    May be defined via the $__ne attribute},
+    {<}, {The comparison operator representing less-than (may be chained with other comparison operators to create a rich comparison).
+    
+    May be defined via the $__lt attribute},
+    {<=}, {The comparison operator representing less-than-or-equals (may be chained with other comparison operators to create a rich comparison).
+    
+    May be defined via the $__le attribute},
+    {>}, {The comparison operator representing greater-than (may be chained with other comparison operators to create a rich comparison).
+    
+    May be defined via the $__gt attribute},
+    {>=}, {The comparison operator representing greater-than-or-equals (may be chained with other comparison operators to create a rich comparison).
+    
+    May be defined via the $__ge attribute},
 
-    For example, `a < b <= c` is equivalent to `a < b && b <= c` except that `b` is only evaluated once. Rich comparisons are short circuiting.
+    {in}, {The contains operator representing whether the left-operand is an element in the right-operand
     
+    May be defined via the $__contains attribute},
+
+    {!in}, {The not-contains operator representing whether the left-operand is not an element in the right-operand
+    
+    May be defined via the $__contains attribute},
+
+
+    {as}, {The function call operator, which calls the right-operand with the left-operand as the only argument. Mainly used as syntactic sugar for type conversions.
+
+    For example, `2.5 as int` is the same as `int(2.5)`
     },
 
+    {|}, {Represents a {@url https://en.wikipedia.org/wiki/Bitwise_operation#OR, bitwise inclusive `or`} of the left-operand and right-operand. Can be overriden via the $__ior attribute.},
+    {^}, {Represents a {@url https://en.wikipedia.org/wiki/Bitwise_operation#XOR, bitwise exclusive `xor`} of the left-operand and right-operand. Can be overriden via the $__xor attribute.},
+    {&}, {Represents a {@url https://en.wikipedia.org/wiki/Bitwise_operation#AND, bitwise `and`} of the left-operand and right-operand. Can be overriden via the $__and attribute.},
+
+    {<<}, {Represents a {@url https://en.wikipedia.org/wiki/Logical_shift, left shift} of the left-operand and right-operand. Can be overriden via the $__lsh attribute},
+    {>>}, {Represents a {@url https://en.wikipedia.org/wiki/Logical_shift, right shift} of the left-operand and right-operand. Can be overriden via the $__rsh attribute},
+
+    {+}, {Represents a {@url https://en.wikipedia.org/wiki/Addition, addition} of the left-operand and right-operand. Can be overriden via the $__add attribute},
+    {-}, {Represents a {@url https://en.wikipedia.org/wiki/Subtraction, subtraction} of the left-operand and right-operand. Can be overriden via the $__sub attribute},
+
+    {*}, {Represents a {@url https://en.wikipedia.org/wiki/Multiplication, multiplication} of the left-operand and right-operand. Can be overriden via the $__mul attribute},
+
+    {@@}, {Represents a {@url https://en.wikipedia.org/wiki/Matrix_multiplication, matrix multiplication} of the left-operand and right-operand. Can be overriden via the $__matmul attribute},
+
+    {/}, {Represents a {@url https://en.wikipedia.org/wiki/Division_(mathematics), division} of the left-operand and right-operand. Can be overriden via the $__div attribute},
+    {//}, {Represents a {@url https://en.wikipedia.org/wiki/Division_(mathematics), floored division} of the left-operand and right-operand. Can be overriden via the $__floordiv attribute},
+    {%}, {Represents a {@url https://en.wikipedia.org/wiki/Modulo_operation, modulo} of the left-operand and right-operand. Can be overriden via the $__mod attribute},
+    {**}, {Represents a {@url https://en.wikipedia.org/wiki/Exponentiation, power} of the left-operand and right-operand. Can be overriden via the $__pow attribute},
+
+
+    {~}, {Represents a {@url https://en.wikipedia.org/wiki/Conjugation, conjugation} of the operand. Can be overriden via the $__sqig attribute},
+    {+ (unary)}, {Represents an identity operation of the operand. Can be overriden via the $__pos attribute},
+    {- (unary)}, {Represents a negation of the operand. Can be overriden via the $__pos attribute},
+    {!}, {Represents a negation of the truth value ($bool) of the operand},
+
 }
 
-
-
-
 }
-
 
 }
 
@@ -3260,6 +3337,31 @@ try {
 Just to explain further:
 
 {@list {If `a` is executed and no exception occurs, it then runs `b`}, {If `a` is executed an exception occurs, and is handled in a `catch` clause, it then runs `b`}, {If `a` is executed and an exception occurs, and is not handled in a `catch` clause, it then runs `b`, and then re-throws the exception, going up the call stack finding the next `try` statement, or causing the program to halt and print the unhandled exception}}
+
+}
+
+
+@node Import Statement, {Module importing}, {
+
+To import a module (for example, one of the {@ref Modules, builtin modules}), you can use the `import` statement. If there was an error finding or importing the module, an $ImportError is thrown.
+
+The statement begins with the `import` keyword, followed by a valid identifier.
+
+
+Examples:
+
+
+```ks
+
+# imports the 'os' module
+import os
+
+# imports the 'net' module
+import net
+
+```
+
+
 
 }
 
