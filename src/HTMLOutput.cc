@@ -56,7 +56,7 @@ string HTMLOutput::plain(const string& x) {
     string r = "";
     for (size_t i = 0; i < x.size(); ++i) {
         char c = x[i];
-        if (c == '<' || c == '>' || c == '?' || c == '!' || c == '(' || c == ':' || c == ';') {
+        if (c == '<' || c == '>' || c == '?' || c == '!' || c == '(' || c == ':' || c == ';' || c == '[' || c == ']') {
             return r;
         } else if (c == ' ' || c == '\t') {
             r += "_";

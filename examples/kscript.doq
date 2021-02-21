@@ -246,7 +246,8 @@ print ((A + B).val)
 Templates are a way to create subtypes of a given type based on parameters (called "template parameters"). This is done by subscripting an existing type with `[]`. Some examples of templates in the standard library are:
 
 {@list
-    {$OSError, which can be templated on the `errno` value returned by the OS (for example, `OSError[3]`)}
+    {$OSError, which can be templated on the `errno` value returned by the OS (for example, `OSError[3]`)},
+    {$ffi.ptr (`ffi.ptr[T]`), which can be templated on the FFI type which it points to}
 
 }
 
@@ -1970,7 +1971,52 @@ However, this package is complicated and large, so before looking at documentati
 
     Datatypes can represent sized-integer values, floating point values, complex floating point values, or structures of other datatypes. Most mathematical operations are only supported on the builtin numeric datayptes (which includes integer, float, and complex datatypes), which support by platform may vary.
 
-    }
+    },
+
+
+    {nx.zeros(shape=none, dtype=nx.double)}, {Create an array of zeros with a shape of `shape` (default: scalar), and datatype (default: double)},
+    {nx.ones(shape=none, dtype=nx.double)}, {Create an array of ones with a shape of `shape` (default: scalar), and datatype (default: double)},
+    
+    
+    {nx.pad(x, shape)}, {Pads `x` to a given shape (`shape`, which should match the rank of `x`). Expands `x` to dimensions which are larger (and adds zeros), and shrinks `x` to dimensions which are smaller (and omits values)},
+
+    {nx.onehot(x, newdim=none, r=none)}, {Computes a one-hot encoding, where `x` are the indices, `newdim` is the size of the new dimension which the indices point to (default: last dimension of `x`), storing in `r` (default: return new array). Indices in `x` are taken modulo `newdim`},
+    {nx.abs(x, r=none)}, {Computes elementwise absolute value of `x`, storing in `r` (default: return new array)},
+    {nx.conj(x, r=none)}, {Computes elementwise conjugation of `x`, storing in `r` (default: return new array)},
+    {nx.neg(x, r=none)}, {Computes elementwise negation of `x`, storing in `r` (default: return new array)},
+    
+    {nx.add(x, y, r=none)}, {Computes elementwise addition of `x` and `y`, storing in `r` (default: return new array)},
+    {nx.sub(x, y, r=none)}, {Computes elementwise subtraction of `x` and `y`, storing in `r` (default: return new array)},
+    {nx.mul(x, y, r=none)}, {Computes elementwise multiplication of `x` and `y`, storing in `r` (default: return new array)},
+    {nx.div(x, y, r=none)}, {Computes elementwise division of `x` and `y`, storing in `r` (default: return new array)},
+    {nx.floordiv(x, y, r=none)}, {Computes elementwise floored division of `x` and `y`, storing in `r` (default: return new array)},
+    {nx.mod(x, y, r=none)}, {Computes elementwise modulo of `x` and `y`, storing in `r` (default: return new array)},
+    {nx.pow(x, y, r=none)}, {Computes elementwise power of `x` and `y`, storing in `r` (default: return new array)},
+
+
+    {nx.exp(x, r=none)}, {Computes elementwise {@url https://en.wikipedia.org/wiki/Exponential_function, exponential function} of `x`, storing in `r` (default: return new array)},
+    {nx.log(x, r=none)}, {Computes elementwise {@url https://en.wikipedia.org/wiki/Natural_logarithm, natural logarithm} of `x`, storing in `r` (default: return new array)},
+
+    {nx.sqrt(x, r=none)}, {Computes elementwise {@url https://en.wikipedia.org/wiki/Square_root, square root} of `x`, storing in `r` (default: return new array)},
+
+    {nx.min(x, axes=none, r=none)}, {Computes reduction on the minimum of `x` on `axes` (default: all), storing in `r` (default: return new array)},
+    {nx.max(x, axes=none, r=none)}, {Computes reduction on the maximum of `x` on `axes` (default: all), storing in `r` (default: return new array)},
+    
+    {nx.sum(x, axes=none, r=none)}, {Computes reduction on the sum of `x` on `axes` (default: all), storing in `r` (default: return new array)},
+    {nx.prod(x, axes=none, r=none)}, {Computes reduction on the product of `x` on `axes` (default: all), storing in `r` (default: return new array)},
+
+    {nx.cumsum(x, axis=-1, r=none)}, {Computes cumuluative sum of `x` on `axes` (default: last), storing in `r` (default: return new array)},
+    {nx.cumprod(x, axis=-1, r=none)}, {Computes cumulative product of `x` on `axes` (default: last), storing in `r` (default: return new array)},
+
+    {nx.sort(x, axis=-1, r=none)}, {Sorts `x` on `axis` (default: last), storing in `r` (default: return new array)},
+
+    {nx.cast(x, dtype, r=none)}, {Casts `x` to a datatype, storing in `r` (default: return new array)},
+    {nx.fpcast(x, dtype, r=none)}, {Casts `x` to a datatype, storing in `r` (default: return new array). This is like $nx.cast, except that it automatically converts to and from fixed point and floating point. For example, if going from integer to float types, the result is scaled to the `[0, 1]` range (unsigned values) or `[-1, 1]` range (signed values). Likewise, going from float to integer types, the result is scaled to the full range of the integer type, from the floating point scale.},
+
+
+    {}, {},
+    {}, {},
+    {}, {},
 
 }
 
@@ -2124,13 +2170,164 @@ Examples:
 
 }
 
-
+}
 
 }
 
 
+@node ffi: Foreign Functions, Foreign Functions, {
+
+The {@url https://en.wikipedia.org/wiki/Foreign_function_interface, foreign function interface} module, `ffi`, provides functionality required to load and execute dynamically loaded code from other languages.
+
+This module has definitions for C-style types (including pointers, structs and functions), and utilities to load libraries.
+
+
+Alias types (for example, $ffi.int, $ffi.long, etc) are really just the specifically sized type for the current platform. For example, on most platforms, `ffi.int == ffi.s32`
+
+
+{@cdict
+    {ffi.s8}, {Signed 8 bit integer},
+    {ffi.u8}, {Unsigned 8 bit integer},
+    {ffi.s16}, {Signed 16 bit integer},
+    {ffi.u16}, {Unsigned 16 bit integer},
+    {ffi.s32}, {Signed 32 bit integer},
+    {ffi.u32}, {Unsigned 32 bit integer},
+    {ffi.s64}, {Signed 64 bit integer},
+    {ffi.u64}, {Unsigned 64 bit integer},
+    {ffi.char}, {Alias for `char` in C},
+    {ffi.uchar}, {Alias for `unsigned char` in C},
+    {ffi.short}, {Alias for `short` in C},
+    {ffi.ushort}, {Alias for `unsigned short` in C},
+    {ffi.int}, {Alias for `int` in C},
+    {ffi.uint}, {Alias for `unsigned int` in C},
+    {ffi.long}, {Alias for `int` in C},
+    {ffi.ulong}, {Alias for `unsigned int` in C},
+    {ffi.longlong}, {Alias for `long long` in C},
+    {ffi.ulonglong}, {Alias for `unsigned long long` in C},
+    {ffi.size_t}, {Alias for `size_t` in C},
+    {ffi.ssize_t}, {Alias for `ssize_t` in C},
+
+    {ffi.float}, {Floating point type: `float` in C},
+    {ffi.double}, {Floating point type: `double` in C},
+    {ffi.longdouble}, {Floating point type: `long double` in C},
+
+    {ffi.ptr[T=none]}, {A pointer to another type. This is an example of a {@ref Templates, templated type}. For example, in C you may have the type `typedef int* int_p;` (for a pointer to an `int`). In this library, you can represent such a type with the expression `ffi.ptr[ffi.int]`
+
+    By default, `ffi.ptr` acts like `ffi.ptr[none]`, which acts like a `void*` in C (i.e. pointer to anything)    
+
+
+    Pointer arithmetic is defined and adds the type of the size. For example:
+
+```ks
+>>> ffi.ptr[ffi.int](0x64)
+0x64
+>>> ffi.ptr[ffi.int](0x64) + 1
+ffi.ptr[ffi.s32](0x68)
+```
+
+    Also, dereferencing and assignment are supported through `[]`:
+
+```ks
+>>> val = ffi.int(4)
+4
+>>> valp = ffi.addr(val)
+ffi.ptr[ffi.s32](0x557EE456A4F0)  # Address of `val`
+>>> valp[0] = 5
+5
+>>> val  # Now, that original value changed
+5
+```
+    },
+
+    {ffi.func[ResultT=none, ArgsT=()]}, {A function type, with a result type and a list of argument types. This is an example of a {@ref Templates, templated type}. For example, in C you may have the function type `int (*myfunc)(char x, short y)`. In this library, you can represent such a type with the expression `ffi.func[ffi.int, (ffi.char, ffi.short)]`
+    
+    Variadic functions are supported via the `...` constant at the end of the arguments array. For example, the `printf` function in C has the type `ffi.func[ffi.int, (ffi.ptr[ffi.char], ...)`.
+
+    FFI functions can be called in kscript, just like a normal function. However, there are a few conversions that go on under-the-hood:
+
+    {@list
+        {Objects are casted to the function's signatures type (i.e. the template arguments)},
+        {For variadic functions, extra arguments are expected to be either FFI types already, or a standard type (`int`, `float`, `str`, `bytes`) that can be converted automatically},
+        {`str` and `bytes` objects are converted into a *mutable* `ffi.ptr[ffi.char]`. It is important that you don't pass them to a function which may mutate them! Use $ffi.fromUTF8 and $ffi.toUTF8 to convert them to mutable buffers}
+    }
+    },
+
+
+    {ffi.struct[*members]}, {A structure type, representing a `struct` type in C. This is an example of a {@ref Templates, templated type}.
+
+    Here are some examples:
+
+```ks
+""" C code
+struct vec3f {
+    float x, y, z;
+};
+"""
+
+# FFI code
+vec3f = ffi.struct[
+    (ffi.float, 'x'),
+    (ffi.float, 'y'),
+    (ffi.float, 'z'),
+]
+
+# Sometimes, if you want to add customizability, you can create a new type:
+type vec3f extends ffi.struct[
+        (ffi.float, 'x'),
+        (ffi.float, 'y'),
+        (ffi.float, 'z'),
+    ] {
+
+    # You can even add methods!
 }
 
+
+# You can create values like this
+# vec3f(1, 2, 3)
+# vec3f(1, 2, 3).y == 2.0
+```
+    
+    },
+
+    {ffi.DLL()}, {Represents a {@url https://en.wikipedia.org/wiki/Dynamic_loading, dynamically loaded library}, typically opened via the $ffi.open function.
+    
+    {@dict
+        {ffi.DLL.load(name, of=ffi.ptr)}, {Loads a symbol from the DLL (by looking it up) which is expected to be of type `of` (default: `void*` in C)
+        
+        For example, the `puts` function can be loaded like so:
+```ks
+>>> libc.load('puts', ffi.func[ffi.int, (ffi.ptr[ffi.char],)])
+```
+
+        See $ffi.func
+        },
+    }
+    },
+
+
+    {ffi.open(src)}, {Opens `src`, which is expected to be a string representing the dynamic library. For example, `ffi.open('libc.so.6')` opens the C standard library on most systems.
+    
+    Returns an $ffi.DLL},
+
+
+    {ffi.sizeof(obj)}, {Computes the size (in bytes) of an object (or, if given a type, the size of objects of that type)},
+
+    {ffi.addr(obj)}, {Returns the address of the value in `obj`, assuming its type is an FFI-based type. The address returns the address of the start of the actual C-value in `obj`, which can be mutated and is only valid as long as `obj` is still alive
+    Return type is `ffi.ptr[type(obj)]`},
+
+
+    {ffi.fromUTF8(addr)}, {Returns a string created from UTF8 bytes at `addr` (assumed to be NUL-terminated)},
+    {ffi.toUTF8(obj, addr=none, sz=-1)}, {Converts `obj` (which is expected to be a string or bytes object) to UTF8 bytes, and stores in `addr` (default: allocate via `malloc()`)
+    
+    If `sz > 0`, then that is the maximum size of the buffer (including NUL-terminator), and no more than `sz` bytes will be written},
+
+    {ffi.malloc(sz)}, {Wrapper for the C function `malloc`},
+    {ffi.realloc(ptr, sz)}, {Wrapper for the C function `realloc`},
+    {ffi.free(ptr)}, {Wrapper for the C function `free`}
+
+}
+
+}
 
 }
 
